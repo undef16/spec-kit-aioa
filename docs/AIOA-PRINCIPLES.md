@@ -413,7 +413,7 @@ For each component, ask:
 
 #### Definition
 
-Abstractions, shared utilities, and common modules SHALL NOT be created proactively. They SHALL only be extracted when concrete reuse pressure exists — at minimum two independent consumers, with a third identified as likely.
+Abstractions, shared utilities, and common modules SHALL NOT be created proactively. They SHALL only be extracted when concrete reuse pressure exists — proven reuse or isolation pressure from multiple independent use cases.
 
 #### Why It Matters
 
@@ -427,7 +427,7 @@ AI agents reason most effectively with concrete, specific code. Every abstractio
 #### Obligations
 
 1. No abstraction SHALL be created speculatively ("we might need this later").
-2. Extraction to a shared module SHALL require at minimum two independent consumers, with a third identified as likely.
+2. Extraction to a shared module SHALL require proven reuse or isolation pressure from multiple independent use cases.
 3. Premature abstractions SHALL be flagged in code review and inlined.
 4. Shared modules extracted under pressure SHALL document their reuse context.
 5. Monoculture (everyone depending on a single shared module) SHALL be avoided — prefer focused, purpose-built abstractions.
@@ -437,14 +437,14 @@ AI agents reason most effectively with concrete, specific code. Every abstractio
 ```
 Is there reuse pressure?
 ├── No → Keep code inlined. Duplication is acceptable.
-├── Yes, 2+ consumers → Consider extraction.
+├── Yes, proven reuse or isolation pressure → Consider extraction.
 │   ├── Are the consumers truly independent?
 │   │   ├── Yes → Extract with clear interface.
 │   │   └── No → Keep inlined (shared context may change together).
 │   └── Is the abstraction stable?
 │       ├── Yes → Extract and freeze interface.
 │       └── No → Defer extraction until stability emerges.
-└── Yes, 1 consumer + likely 2nd → Document as "pending extraction."
+└── Yes, emerging reuse or isolation pressure → Document as "pending extraction."
 ```
 
 #### Anti-Patterns
@@ -773,7 +773,7 @@ Requirements → AIOA Spec (10 principles) → ADRs (all principles) → Impleme
 **AIOA Solution:**
 - Keep code concrete until reuse pressure exists
 - Accept some duplication over speculative abstraction
-- Extract only when ≥2 independent consumers exist
+- Extract only when proven reuse or isolation pressure exists
 
 ### Anti-Pattern 7: Synchronous Spaghetti
 

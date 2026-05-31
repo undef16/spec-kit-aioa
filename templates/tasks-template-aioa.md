@@ -1,20 +1,13 @@
-# Task: {{task_title}}
+---
+# AIOA Additions — Appended after core tasks-template.md
+# This file contains ONLY AIOA-specific sections that are appended to the core Spec Kit tasks template.
+---
 
 > **AIOA Preset Active** — This task includes full AIOA principle verification (all 10 principles).
-> Generated: {{date}}
 
 ---
 
-## 1. Task Overview
-
-### 1.1 Description
-{{task_description}}
-
-### 1.2 Acceptance Criteria
-- {{acceptance_criterion_1}}
-- {{acceptance_criterion_2}}
-
-### 1.3 AIOA Context Budget
+## AIOA Context Budget
 
 | Context Item | Details |
 |-------------|---------|
@@ -25,15 +18,15 @@
 
 ---
 
-## 2. AIOA Principle Checks
+## AIOA Principle Checks
 
-### 2.1 P1: Local Reasoning Check
+### P1: Local Reasoning Check
 
 - [ ] Task can be understood from local context alone
 - [ ] All external context requirements are explicitly documented
 - [ ] No global state or ambient conventions required for understanding
 
-### 2.2 P2: Crystallization Radius Verification
+### P2: Crystallization Radius Verification
 
 **Pre-Implementation Check:**
 - [ ] Agent has loaded all context files listed above ({{context_budget}} items)
@@ -55,7 +48,7 @@
 {{context_surface_map}}
 ```
 
-### 2.3 P3: Semantic Integrity Validation
+### P3: Semantic Integrity Validation
 
 **Boundaries Crossed:**
 
@@ -81,48 +74,48 @@
 - [ ] Transformation logic is governed by a semantic contract
 - [ ] Transformations are tested for meaning preservation
 
-### 2.4 P4: Boundaries Explicit Check
+### P4: Boundaries Explicit Check
 
 - [ ] Every boundary crossed is explicitly declared
 - [ ] Cross-boundary access occurs only through declared interfaces
 - [ ] No implicit boundaries are crossed
 - [ ] Component responsibilities are respected
 
-### 2.5 P5: Contracts Deterministic Check
+### P5: Contracts Deterministic Check
 
 - [ ] All interfaces in this task have machine-verifiable schemas
 - [ ] Schema validation is enforced at boundaries
 - [ ] Breaking changes to contracts require version bump
 - [ ] Consumer-driven contracts are satisfied
 
-### 2.6 P6: Control-Flow Complexity Check
+### P6: Control-Flow Complexity Check
 
 - [ ] Code is linear and declarative where possible
 - [ ] No deeply nested conditionals (depth > 3)
 - [ ] Mutable state is localized and minimized
 - [ ] Complex control flow is replaced with declarative operations
 
-### 2.7 P7: Reasoning Boundaries not Deployment Check
+### P7: Reasoning Boundaries not Deployment Check
 
 - [ ] No infrastructure dependencies in core logic
 - [ ] All interfaces remain deployment-agnostic
 - [ ] No topology assumptions in implementation
 - [ ] Infrastructure concerns isolated to deployment boundary
 
-### 2.8 P8: Extract Under Reuse Pressure Check
+### P8: Extract Under Reuse Pressure Check
 
 - [ ] Any new abstractions have sufficient reuse pressure (≥2 consumers)
 - [ ] No speculative abstractions introduced
 - [ ] Existing abstractions are justified
 
-### 2.9 P9: Event Boundaries Check
+### P9: Event Boundaries Check
 
 - [ ] Cross-component communication uses event bus where feasible (TIP-008)
 - [ ] Direct synchronous calls are exceptions with documented rationale
 - [ ] Event schemas are versioned and shared
 - [ ] Event handlers are idempotent
 
-### 2.10 P10: Runtime State Explainability Check
+### P10: Runtime State Explainability Check
 
 - [ ] State mutations have provenance records (who, what, when, why)
 - [ ] State is inspectable without side effects
@@ -131,7 +124,7 @@
 
 ---
 
-## 3. Implementation Steps
+## AIOA Implementation Step Checks
 
 ### Step 1: {{implementation_step_1}}
 - {{detail_1}}
@@ -150,9 +143,7 @@
 
 ---
 
-## 4. Verification
-
-### 4.1 AIOA Compliance Checklist
+## AIOA Compliance Checklist
 
 **P1 Local Reasoning:**
 - [ ] Task is understandable from local context
@@ -199,38 +190,18 @@
 - [ ] State is auditable with provenance records
 - [ ] ADTO pattern is followed
 
-### 4.2 Test Criteria
-- {{test_criterion_1}}
-- {{test_criterion_2}}
-- {{test_criterion_3}}
-
 ---
 
-## 5. Post-Completion
+## AIOA Post-Completion
 
-### 5.1 Context Budget Update
+### Context Budget Update
 - [ ] Context budget documentation updated (if changed)
 - [ ] Crystallization Radius re-evaluated and documented
 
-### 5.2 Semantic Integrity Sign-off
+### Semantic Integrity Sign-off
 - [ ] All integrity gates passed
 - [ ] Semantic contracts are satisfied
 
-### 5.3 Principle Compliance Sign-off
+### Principle Compliance Sign-off
 - [ ] All 10 AIOA principles verified
 - [ ] Any principle violations documented and addressed
-
----
-
-## 6. Dependencies
-
-### 6.1 Required Context
-- {{required_context_1}}
-- {{required_context_2}}
-
-### 6.2 Prerequisite Tasks
-- {{prerequisite_1}}
-- {{prerequisite_2}}
-
-### 6.3 Blocked By
-- {{blocked_by}}

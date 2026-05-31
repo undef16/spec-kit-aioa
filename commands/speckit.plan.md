@@ -1,3 +1,9 @@
+---
+description: "Plan command with Architecture Decision Records and principle checks"
+scripts:
+  - specify plan
+---
+
 # speckit.plan — AIOA-Enhanced Plan Command
 
 **Preset:** aioa (version 1.0.0)
@@ -196,6 +202,22 @@ Write the plan using the AIOA plan template with all sections populated.
 - Runtime state explainability plan
 - Risk assessment for all principles
 - Principle compliance summary matrix
+
+### TIP-008: Event-Driven Integration Analysis
+
+For each component interaction in the plan, assess:
+
+1. **Coupling type**: Is the interaction synchronous (direct call) or asynchronous (event)?
+2. **Reasoning locality**: Does the component need to understand another component's internals?
+3. **Event boundaries**: Can the interaction be replaced with an event-driven pattern?
+
+Prefer event boundaries when they reduce reasoning complexity without violating business requirements.
+
+#### Event Contract Requirements
+- Events must be immutable and versioned
+- Events must describe business facts, not implementation details
+- Handlers must focus on local responsibilities
+- Producers must not depend on consumers
 
 ---
 

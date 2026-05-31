@@ -1,26 +1,15 @@
-# Specification: {{spec_title}}
+---
+# AIOA Additions — Appended after core spec-template.md
+# This file contains ONLY AIOA-specific sections that are appended to the core Spec Kit spec template.
+---
 
 > **AIOA Preset Active** — All specifications must include full AIOA compliance analysis (all 10 principles).
-> Generated: {{date}}
 
 ---
 
-## 1. Overview
+## AIOA Compliance — Principle Assessments
 
-### 1.1 Problem Statement
-{{problem_statement}}
-
-### 1.2 Proposed Solution
-{{proposed_solution}}
-
-### 1.3 Scope
-{{scope}}
-
----
-
-## 2. AIOA Compliance — Principle Assessments
-
-### 2.1 P1: Local Reasoning Assessment
+### P1: Local Reasoning Assessment
 
 **Question:** *Can this feature be understood from local context alone?*
 
@@ -34,7 +23,7 @@
 - {{local_reasoning_mitigation_1}}
 - {{local_reasoning_mitigation_2}}
 
-### 2.2 P2: Crystallization Radius Impact Assessment
+### P2: Crystallization Radius Impact Assessment
 
 **Question:** *How much additional context must an AI agent consume to implement this specification safely?*
 
@@ -50,7 +39,7 @@
 - {{crystallization_radius_mitigation_1}}
 - {{crystallization_radius_mitigation_2}}
 
-### 2.3 P3: Semantic Integrity Requirements
+### P3: Semantic Integrity Requirements
 
 **Question:** *What meaning must be preserved across which architectural boundaries?*
 
@@ -65,7 +54,7 @@
 
 **Boundary validation strategy (TIP-007):** {{boundary_validation_strategy}}
 
-### 2.4 P4: Boundaries Explicit Map
+### P4: Boundaries Explicit Map
 
 **Question:** *What component boundaries does this specification cross?*
 
@@ -79,7 +68,7 @@
 - [ ] Cross-boundary access occurs only through declared interfaces
 - [ ] No implicit boundaries exist in this specification
 
-### 2.5 P5: Contracts Deterministic Check
+### P5: Contracts Deterministic Check
 
 **Question:** *Are all interfaces in this specification machine-verifiable?*
 
@@ -94,7 +83,7 @@
 - [ ] Breaking changes require version bump
 - [ ] Consumer-driven contracts are defined
 
-### 2.6 P6: Control-Flow Complexity Check
+### P6: Control-Flow Complexity Check
 
 **Question:** *Is the proposed design linear and declarative?*
 
@@ -108,7 +97,7 @@
 - {{complexity_mitigation_1}}
 - {{complexity_mitigation_2}}
 
-### 2.7 P7: Reasoning Boundaries not Deployment Check (Architectural Independence)
+### P7: Reasoning Boundaries not Deployment Check (Architectural Independence)
 
 **Question:** *Does this specification assume a particular deployment topology?*
 
@@ -124,7 +113,7 @@
 - [ ] Component boundaries are semantic reasoning boundaries, not deployment boundaries
 - [ ] Same components could be deployed as monolith, microservices, or serverless
 
-### 2.8 P8: Extract Under Reuse Pressure Assessment
+### P8: Extract Under Reuse Pressure Assessment
 
 **Question:** *Are any abstractions in this specification premature?*
 
@@ -135,7 +124,7 @@
 
 **Rule:** No abstraction SHALL be created with fewer than 2 confirmed consumers unless explicitly justified.
 
-### 2.9 P9: Event Boundaries Plan
+### P9: Event Boundaries Plan
 
 **Question:** *How does cross-component communication happen?*
 
@@ -150,7 +139,7 @@
 - [ ] Event schemas are versioned and shared
 - [ ] Event handlers are idempotent
 
-### 2.10 P10: Runtime State Explainability Plan
+### P10: Runtime State Explainability Plan
 
 **Question:** *Can runtime state be explained and audited?*
 
@@ -167,9 +156,9 @@
 
 ---
 
-## 3. Context Budget
+## Context Budget
 
-### 3.1 Context Requirements by Agent Role
+### Context Requirements by Agent Role
 
 | Agent Role | Context Required | Estimated Budget |
 |------------|-----------------|------------------|
@@ -178,7 +167,7 @@
 | Implementation Agent | {{implementation_context}} | {{implementation_budget}} |
 | Review Agent | {{review_context}} | {{review_budget}} |
 
-### 3.2 External Dependencies
+### External Dependencies
 
 | Dependency | Version | Context Impact |
 |------------|---------|----------------|
@@ -187,57 +176,13 @@
 
 ---
 
-## 4. Technical Design
+## Context Flow Optimization
 
-### 4.1 Architecture Overview
-
-{{architecture_overview}}
-
-### 4.2 Component Diagram
-
-```
-{{component_diagram}}
-```
-
-### 4.3 Data Flow
-
-{{data_flow_description}}
-
-### 4.4 Interfaces
-
-| Interface | Provider | Consumer | Contract |
-|-----------|----------|----------|----------|
-| {{interface_1}} | {{provider_1}} | {{consumer_1}} | {{contract_1}} |
-| {{interface_2}} | {{provider_2}} | {{consumer_2}} | {{contract_2}} |
-
----
-
-## 5. Semantic Contracts
-
-### 5.1 Shared Types
-
-```typescript
-// {{shared_type_1}}
-{{shared_type_definition_1}}
-
-// {{shared_type_2}}
-{{shared_type_definition_2}}
-```
-
-### 5.2 Invariants
-
-- {{invariant_1}}
-- {{invariant_2}}
-
----
-
-## 6. Context Flow Optimization
-
-### 6.1 Current Context Flow
+### Current Context Flow
 
 {{current_context_flow}}
 
-### 6.2 Optimizations Applied
+### Optimizations Applied
 
 | Optimization | Impact on Crystallization Radius |
 |-------------|----------------------------------|
@@ -246,18 +191,9 @@
 
 ---
 
-## 7. Decision Log
+## AIOA Principle Review Checklist
 
-| Decision | Rationale | AIOA Principle Applied |
-|----------|-----------|------------------------|
-| {{decision_1}} | {{rationale_1}} | {{principle_1}} |
-| {{decision_2}} | {{rationale_2}} | {{principle_2}} |
-
----
-
-## 8. Review Checklist
-
-### 8.1 All 10 Principles Checked
+### All 10 Principles Checked
 
 - [ ] **P1 Local Reasoning** — Feature is understandable from local context
 - [ ] **P2 Crystallization Radius** — Radius is documented and within acceptable range
@@ -269,11 +205,3 @@
 - [ ] **P8 Extract Under Reuse Pressure** — No premature abstractions
 - [ ] **P9 Event Boundaries** — Cross-component communication is event-driven
 - [ ] **P10 Runtime State Explainable** — State is auditable and inspectable
-
-### 8.2 Standard Checks
-
-- [ ] Context budget is estimated for each agent role
-- [ ] External dependencies are assessed for context impact
-- [ ] Component boundaries are explicitly defined
-- [ ] Shared semantic contracts are versioned
-- [ ] Data flows are documented with transformation points highlighted

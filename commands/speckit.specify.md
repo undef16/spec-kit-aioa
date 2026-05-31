@@ -1,3 +1,9 @@
+---
+description: "Enhanced specify command with AIOA principle impact analysis"
+scripts:
+  - specify spec
+---
+
 # speckit.specify — AIOA-Enhanced Specification Command
 
 **Preset:** aioa (version 1.0.0)
@@ -169,12 +175,34 @@ For each principle, prompt the user and record the assessment.
 
 **TIP-009 reference:** Use Auditable DTOs (ADTO) with provenance tracking.
 
+### TIP-004: Code Crystallization Analysis
+
+Before approving the specification, assess the Architectural Crystallization Radius:
+
+1. **Indirection layers**: How many pass-through interfaces, factory chains, or mediator layers must be traversed?
+2. **Business logic density**: Is business logic directly visible or hidden behind abstractions?
+3. **Modification path**: Can the feature be modified by changing 1-3 files, or does it require 9+ files?
+
+Target: Reduce Architectural Crystallization Radius to LOW (1-3 files).
+
+### TIP-005: Quantum Spectrum Classification
+
+Classify each component in the specification by Quantum Spectrum level:
+
+| Level | Description | Example |
+|-------|-------------|---------|
+| **Micro Actor** | Primary business boundary | Billing, Inventory, Ordering |
+| **Nano Actor** | Reusable business workflow | ApplyDiscount, ValidatePromotion |
+| **Pico Actor** | Deterministic execution primitive | FindCustomerById, FormatInvoiceNumber |
+
+Rule: Start large (Micro Actor). Extract downward only when reuse pressure appears.
+
 ### Step 3: Generate AIOA-Compliant Specification
 
 Write the specification using the AIOA spec template with all sections populated.
 
 **Include:**
-- `spec-template.md` with all 10 principle assessments filled
+- `spec-template-aioa.md` with all 10 principle assessments filled
 - P1 Local Reasoning assessment
 - P2 Crystallization Radius impact assessment table
 - P3 Semantic Integrity requirements per boundary

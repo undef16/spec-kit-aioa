@@ -1,28 +1,13 @@
-# Plan: {{plan_title}}
+---
+# AIOA Additions — Appended after core plan-template.md
+# This file contains ONLY AIOA-specific sections that are appended to the core Spec Kit plan template.
+---
 
 > **AIOA Preset Active** — All plan steps include full AIOA principle analysis (all 10 principles).
-> Generated: {{date}}
 
 ---
 
-## 1. Plan Overview
-
-### 1.1 Goal
-{{plan_goal}}
-
-### 1.2 Success Criteria
-- {{success_criterion_1}}
-- {{success_criterion_2}}
-
-### 1.3 Architecture Context
-
-```
-{{architecture_context_diagram}}
-```
-
----
-
-## 2. Architecture Decision Records
+## Architecture Decision Records
 
 ### ADR-{{number}}: {{decision_title}}
 
@@ -91,15 +76,15 @@
 
 ---
 
-## 3. Component Boundaries
+## Component Boundaries with Crystallization Radius
 
-### 3.1 Boundary Map
+### Boundary Map
 
 ```
 {{boundary_map_diagram}}
 ```
 
-### 3.2 Component Definitions
+### Component Definitions
 
 | Component | Responsibility | Crystallization Radius | Dependencies | Boundary Explicit? |
 |-----------|--------------|------------------------|--------------|-------------------|
@@ -107,7 +92,7 @@
 | {{component_2}} | {{responsibility_2}} | {{radius_2}} | {{dependencies_2}} | 🟢 Yes / 🔴 No |
 | {{component_3}} | {{responsibility_3}} | {{radius_3}} | {{dependencies_3}} | 🟢 Yes / 🔴 No |
 
-### 3.3 Boundary Contracts
+### Boundary Contracts with Context Cost
 
 | Boundary | Interface | Semantic Contract | Context Cost | Contract Deterministic? |
 |----------|-----------|-------------------|--------------|------------------------|
@@ -116,19 +101,19 @@
 
 ---
 
-## 4. Context Flow Diagram
+## Context Flow with Optimization
 
-### 4.1 Data/Control Flow
+### Data/Control Flow
 
 ```
 {{context_flow_diagram}}
 ```
 
-### 4.2 Context Flow Description
+### Context Flow Description
 
 {{context_flow_description}}
 
-### 4.3 Hot Paths (High-Context Flows)
+### Hot Paths (High-Context Flows)
 
 | Flow | Context Cost | Optimization Opportunity |
 |------|-------------|------------------------|
@@ -137,19 +122,13 @@
 
 ---
 
-## 5. Steps
+## Pre-Implementation AIOA Principle Checks
+
+For each implementation step, the following AIOA principle checks SHALL be performed before coding begins.
 
 ### Step {{step_number}}: {{step_title}}
 
-**Estimated effort:** {{effort}}
-
 **Context budget for implementation agent:** {{context_budget}}
-
-**Dependencies:**
-- {{dependency_1}}
-- {{dependency_2}}
-
-**AIOA Principle Checks — Pre-Implementation:**
 
 **P1 — Local Reasoning:**
 - [ ] Agent can understand this step from local context alone
@@ -193,16 +172,9 @@
 - [ ] State changes have provenance records
 - [ ] ADTO pattern followed (TIP-009)
 
-**Implementation details:**
-{{implementation_details}}
-
-**Validation criteria:**
-- {{validation_1}}
-- {{validation_2}}
-
 ---
 
-## 6. Semantic Integrity Checkpoints
+## Semantic Integrity Checkpoints
 
 ### Checkpoint 1: {{checkpoint_title_1}}
 
@@ -226,23 +198,23 @@
 
 ---
 
-## 7. Risk Assessment
+## AIOA Risk Assessment
 
-### 7.1 Crystallization Radius Risks
+### Crystallization Radius Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | {{risk_1}} | {{likelihood_1}} | {{impact_1}} | {{mitigation_1}} |
 | {{risk_2}} | {{likelihood_2}} | {{impact_2}} | {{mitigation_2}} |
 
-### 7.2 Semantic Integrity Risks
+### Semantic Integrity Risks
 
 | Risk | Boundary Affected | Detection Strategy |
 |------|------------------|-------------------|
 | {{risk_1}} | {{boundary_1}} | {{detection_1}} |
 | {{risk_2}} | {{boundary_2}} | {{detection_2}} |
 
-### 7.3 Other Principle Risks
+### Other Principle Risks
 
 | Risk | Principle | Impact | Mitigation |
 |------|-----------|--------|------------|
@@ -251,7 +223,7 @@
 
 ---
 
-## 8. Architecture Independence Verification (P7)
+## Architecture Independence Verification (P7)
 
 - [ ] All component dependencies are interface-based, not infrastructure-based
 - [ ] No deployment topology assumed in any component design
@@ -260,20 +232,7 @@
 
 ---
 
-## 9. Plan Validation
-
-### Prerequisites
-- {{prerequisite_1}}
-- {{prerequisite_2}}
-
-### Post-conditions
-- {{post_condition_1}}
-- {{post_condition_2}}
-
-### Rollback strategy
-{{rollback_strategy}}
-
-### AIOA Principle Compliance Summary
+## AIOA Principle Compliance Summary
 
 | Principle | Status | Notes |
 |-----------|--------|-------|

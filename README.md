@@ -31,12 +31,6 @@
 | P9 | **Event Boundaries** | Is cross-component communication event-driven? |
 | P10 | **Runtime State Explainable** | Can runtime state be explained and audited? |
 
-### Key TIPs
-
-- **TIP-007: Strict JSON Gateways** — validate at boundaries
-- **TIP-008: Event-Driven Integration** — event bus for cross-component communication
-- **TIP-009: Auditable DTOs (ADTO)** — runtime state provenance tracking
-
 ---
 
 ## Installation
@@ -249,23 +243,28 @@ The review template checks all 9 review gates:
 
 ```
 spec-kit-aioa-preset/
-├── preset.yml                      # Preset manifest
-├── README.md                       # This file
-├── LICENSE                         # MIT License
-├── templates/
-│   ├── constitution.md             # AIOA principles as project constitution
-│   ├── spec-template.md            # Spec template with AIOA constraints
-│   ├── plan-template.md            # Plan template with Crystallization Radius checks
-│   ├── task-template.md            # Task template with Semantic Integrity gates
-│   └── code-review-template.md     # Code review template with AIOA compliance
-├── commands/
-│   ├── speckit.specify.md          # Enhanced specify command with AIOA guidance
-│   ├── speckit.plan.md             # Plan command with architecture checks
-│   └── speckit.tasks.md            # Tasks command with AIOA validation steps
-└── docs/
-    ├── AIOA-PRINCIPLES.md          # Full AIOA principles reference (all 10)
-    ├── CRYSTALLIZATION-RADIUS.md   # Crystallization Radius guide
-    └── SEMANTIC-INTEGRITY.md       # Semantic Integrity guide
+├── preset.yml                          # Preset manifest (strategy: append)
+├── README.md                           # This file
+├── LICENSE                             # MIT License
+├── CHANGELOG.md                        # Version history
+├── templates/                          # AIOA additions (appended to core templates)
+│   ├── constitution-template-aioa.md   # AIOA principles additions
+│   ├── spec-template-aioa.md           # Spec AIOA compliance additions
+│   ├── plan-template-aioa.md           # Plan ADR and principle checks
+│   ├── tasks-template-aioa.md          # Tasks context budget and gates
+│   └── code-review-template-aioa.md    # Code review AIOA gates
+├── commands/                           # Command overrides
+│   ├── speckit.specify.md              # Enhanced specify with TIP-004/005 analysis
+│   ├── speckit.plan.md                 # Plan with TIP-008 event analysis
+│   └── speckit.tasks.md                # Tasks with TIP-009 ADTO pattern
+└── docs/                               # AIOA reference documentation
+    ├── AIOA-PRINCIPLES.md              # Full AIOA principles reference
+    ├── CRYSTALLIZATION-RADIUS.md       # Crystallization Radius guide
+    ├── SEMANTIC-INTEGRITY.md           # Semantic Integrity guide
+    ├── BOUNDARIES.md                   # Boundary declarations (P4)
+    ├── CONTEXT-BUDGET.md               # Context budget annotations (P2)
+    ├── JSON-SCHEMA.md                  # Template JSON schemas (P5/TIP-007)
+    └── PROVENANCE.md                   # Provenance tracking (P10/TIP-009)
 ```
 
 ---

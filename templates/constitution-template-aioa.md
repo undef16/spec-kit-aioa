@@ -1,4 +1,7 @@
-# [PROJECT_NAME] Constitution
+---
+# AIOA Additions — Appended after core constitution-template.md
+# This file contains ONLY AIOA-specific sections that are appended to the core Spec Kit constitution template.
+---
 
 > This constitution is governed by the AIOA (AI-Oriented Architecture) preset.
 > All 10 AIOA principles are non-negotiable. Additional project-specific principles may be added below.
@@ -127,11 +130,11 @@ This project's logical architecture SHALL NOT depend on or assume any specific d
 
 > *"Don't abstract until reuse pressure exists."*
 
-Abstractions, shared utilities, and common modules SHALL NOT be created proactively. They SHALL only be extracted when concrete reuse pressure exists — at least three independent consumers or clear evidence of duplication causing maintenance burden.
+Abstractions, shared utilities, and common modules SHALL NOT be created proactively. They SHALL only be extracted when concrete reuse or isolation pressure becomes real — clear evidence of duplication causing maintenance burden or demonstrated need from multiple independent use cases.
 
 **Obligations:**
 1. No abstraction SHALL be created speculatively ("we might need this later").
-2. Extraction to a shared module SHALL require at minimum two independent consumers, with a third identified as likely.
+2. Extraction to a shared module SHALL require proven reuse or isolation pressure from multiple independent use cases.
 3. Premature abstractions SHALL be flagged in code review and inlined.
 4. Shared modules extracted under pressure SHALL document their reuse context.
 5. Monoculture (everyone depending on a single shared module) SHALL be avoided — prefer focused, purpose-built abstractions.
@@ -165,18 +168,6 @@ Every component's runtime state SHALL be explainable — able to answer "what is
 3. State transitions SHALL follow the ADTO pattern: each DTO carries a `_provenance` field with version, timestamp, and origin.
 4. Immutable event sourcing SHOULD be preferred over mutable state where feasible.
 5. State inspection endpoints or tools SHALL be available in all environments.
-
----
-
-## Project-Specific Principles
-
-### [PRINCIPLE_11_NAME]
-[PRINCIPLE_11_DESCRIPTION]
-<!-- Project-specific principle placeholder. Add your own principles here. Examples: KISS, DRY, OOP, TDD, etc. -->
-
-### [PRINCIPLE_12_NAME]
-[PRINCIPLE_12_DESCRIPTION]
-<!-- Project-specific principle placeholder. -->
 
 ---
 
@@ -237,11 +228,3 @@ Every DTO that crosses a component boundary or represents persisted state SHALL 
 - `timestamp` — ISO 8601 timestamp of creation/last mutation
 - `origin` — component or service that created this DTO
 - `trace_id` — correlation ID linking this DTO to its originating operation
-
----
-
-## Governance
-
-[GOVERNANCE_RULES]
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]

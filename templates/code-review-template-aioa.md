@@ -1,23 +1,15 @@
-# Code Review: {{review_title}}
+---
+# AIOA Additions — Appended after core code-review-template.md
+# This file contains ONLY AIOA-specific sections that are appended to the core Spec Kit code review template.
+---
 
 > **AIOA Preset Active** — This review enforces all 9 AIOA review gates.
-> Generated: {{date}}
 
 ---
 
-## 1. Review Overview
+## AIOA Review Gate 1: Crystallization Radius
 
-**Change being reviewed:** {{change_description}}
-
-**Files changed:** {{files_changed}}
-
-**Reviewer context budget:** {{context_budget}}
-
----
-
-## 2. Review Gate 1: Crystallization Radius
-
-### 2.1 Radius Impact Assessment
+### Radius Impact Assessment
 
 **Question:** *Does this change expand the Crystallization Radius of any component?*
 
@@ -26,7 +18,7 @@
 | {{component_1}} | {{before_1}} | {{after_1}} | 🟢 No / 🔴 Yes |
 | {{component_2}} | {{before_2}} | {{after_2}} | 🟢 No / 🔴 Yes |
 
-### 2.2 Context Expansion Check
+### Context Expansion Check
 
 - [ ] No new cross-module dependencies introduced
 - [ ] No additional context files required to understand the change
@@ -34,7 +26,7 @@
 - [ ] Context budget annotations are accurate
 - [ ] Change does not create "hidden context" (implicit coupling via shared mutable state, ambient conventions, etc.)
 
-### 2.3 High-Crystallization-Risk Patterns
+### High-Crystallization-Risk Patterns
 
 **Check for these anti-patterns:**
 
@@ -46,7 +38,7 @@
 | Cross-cutting concern introduced without declaration | 🟢 No / 🔴 Yes | {{cross_cutting_location}} |
 | Context hidden in configuration | 🟢 No / 🔴 Yes | {{config_hidden_location}} |
 
-### 2.4 Gate 1 Verdict
+### Gate 1 Verdict
 
 - [ ] **PASS** — Crystallization Radius is maintained or improved
 - [ ] **PARTIAL** — Minor increase with justification
@@ -54,9 +46,9 @@
 
 ---
 
-## 3. Review Gate 2: Semantic Integrity
+## AIOA Review Gate 2: Semantic Integrity
 
-### 3.1 Boundary Integrity Check
+### Boundary Integrity Check
 
 **Question:** *Is meaning preserved as data/behavior crosses component boundaries?*
 
@@ -65,7 +57,7 @@
 | {{boundary_1}} | {{data_1}} | 🟢 Yes / 🔴 No / ⚪ N/A |
 | {{boundary_2}} | {{data_2}} | 🟢 Yes / 🔴 No / ⚪ N/A |
 
-### 3.2 Semantic Violation Scan
+### Semantic Violation Scan
 
 - [ ] Shared types are used consistently across all boundaries
 - [ ] No silent type casting or data reshaping across modules
@@ -74,14 +66,14 @@
 - [ ] No semantic drift — the same concept has the same representation everywhere
 - [ ] Versioned contracts are respected (no breaking changes without version bump)
 
-### 3.3 Semantic Drift Detections
+### Semantic Drift Detections
 
 | Issue | Severity | Location | Remediation |
 |-------|----------|----------|-------------|
 | {{issue_1}} | {{severity_1}} | {{location_1}} | {{remediation_1}} |
 | {{issue_2}} | {{severity_2}} | {{location_2}} | {{remediation_2}} |
 
-### 3.4 Gate 2 Verdict
+### Gate 2 Verdict
 
 - [ ] **PASS** — Semantic Integrity is preserved across all boundaries
 - [ ] **PARTIAL** — Minor drift with remediation plan
@@ -89,9 +81,9 @@
 
 ---
 
-## 4. Review Gate 3: Local Reasoning
+## AIOA Review Gate 3: Local Reasoning
 
-### 4.1 Local Understandability Check
+### Local Understandability Check
 
 **Question:** *Can the changed code be understood from local context alone?*
 
@@ -100,7 +92,7 @@
 - [ ] Side effects are declared at function signature level
 - [ ] No global state or ambient conventions required for understanding
 
-### 4.2 Hidden Context Scan
+### Hidden Context Scan
 
 | Pattern | Found? | Location |
 |---------|--------|----------|
@@ -109,7 +101,7 @@
 | Implicit configuration dependency | 🟢 No / 🔴 Yes | {{implicit_config_location}} |
 | "Magic" values without explanation | 🟢 No / 🔴 Yes | {{magic_value_location}} |
 
-### 4.3 Gate 3 Verdict
+### Gate 3 Verdict
 
 - [ ] **PASS** — Code is locally understandable
 - [ ] **PARTIAL** — Minor local reasoning issues
@@ -117,9 +109,9 @@
 
 ---
 
-## 5. Review Gate 4: Boundary Explicitness
+## AIOA Review Gate 4: Boundary Explicitness
 
-### 5.1 Boundary Declaration Check
+### Boundary Declaration Check
 
 **Question:** *Are all component boundaries involved in this change explicitly declared?*
 
@@ -128,14 +120,14 @@
 - [ ] No direct access to internal implementation of other components
 - [ ] No implicit boundaries based on conventions or directory structure
 
-### 5.2 Boundary Violations
+### Boundary Violations
 
 | Violation | Component | Resolution |
 |-----------|-----------|------------|
 | {{violation_1}} | {{component_violated_1}} | {{resolution_1}} |
 | {{violation_2}} | {{component_violated_2}} | {{resolution_2}} |
 
-### 5.3 Gate 4 Verdict
+### Gate 4 Verdict
 
 - [ ] **PASS** — All boundaries are explicit
 - [ ] **PARTIAL** — Minor boundary explicitness issues
@@ -143,9 +135,9 @@
 
 ---
 
-## 6. Review Gate 5: Contract Determinism
+## AIOA Review Gate 5: Contract Determinism
 
-### 6.1 Machine-Verifiability Check
+### Machine-Verifiability Check
 
 **Question:** *Are all interfaces in this change machine-verifiable?*
 
@@ -155,7 +147,7 @@
 - [ ] Contract versioning is respected
 - [ ] Consumer-driven contracts are satisfied
 
-### 6.2 Non-Deterministic Patterns
+### Non-Deterministic Patterns
 
 | Pattern | Found? | Location |
 |---------|--------|----------|
@@ -164,7 +156,7 @@
 | Inconsistent error shapes | 🟢 No / 🔴 Yes | {{error_shape_location}} |
 | Schema version mismatch | 🟢 No / 🔴 Yes | {{version_mismatch_location}} |
 
-### 6.3 Gate 5 Verdict
+### Gate 5 Verdict
 
 - [ ] **PASS** — All interfaces are machine-verifiable
 - [ ] **PARTIAL** — Minor verification gaps
@@ -172,9 +164,9 @@
 
 ---
 
-## 7. Review Gate 6: Control-Flow Simplicity
+## AIOA Review Gate 6: Control-Flow Simplicity
 
-### 7.1 Complexity Assessment
+### Complexity Assessment
 
 **Question:** *Is the code straight-line and declarative?*
 
@@ -184,14 +176,14 @@
 - [ ] Control flow is linear (no long-range breaks, goto patterns)
 - [ ] Async control flow uses async/await
 
-### 7.2 Complexity Hotspots
+### Complexity Hotspots
 
 | Location | Issue | Recommendation |
 |----------|-------|----------------|
 | {{complex_location_1}} | {{complex_issue_1}} | {{complex_recommendation_1}} |
 | {{complex_location_2}} | {{complex_issue_2}} | {{complex_recommendation_2}} |
 
-### 7.3 Gate 6 Verdict
+### Gate 6 Verdict
 
 - [ ] **PASS** — Code is simple and declarative
 - [ ] **PARTIAL** — Minor complexity issues
@@ -199,9 +191,9 @@
 
 ---
 
-## 8. Review Gate 7: Decomposition Quality
+## AIOA Review Gate 7: Decomposition Quality
 
-### 8.1 Granularity Assessment
+### Granularity Assessment
 
 **Question:** *Is the component granularity appropriate?*
 
@@ -210,14 +202,14 @@
 - [ ] No component requires understanding of the whole system
 - [ ] Component size is appropriate for AI agent context windows
 
-### 8.2 Decomposition Issues
+### Decomposition Issues
 
 | Issue | Component | Recommendation |
 |-------|-----------|----------------|
 | {{decomposition_issue_1}} | {{decomposition_component_1}} | {{decomposition_recommendation_1}} |
 | {{decomposition_issue_2}} | {{decomposition_component_2}} | {{decomposition_recommendation_2}} |
 
-### 8.3 Gate 7 Verdict
+### Gate 7 Verdict
 
 - [ ] **PASS** — Decomposition quality is appropriate
 - [ ] **PARTIAL** — Minor decomposition issues
@@ -225,9 +217,9 @@
 
 ---
 
-## 9. Review Gate 8: Integration Locality
+## AIOA Review Gate 8: Integration Locality
 
-### 9.1 Integration Assessment
+### Integration Assessment
 
 **Question:** *Are integrations local and explicit?*
 
@@ -236,14 +228,14 @@
 - [ ] Integration contracts are versioned and documented
 - [ ] No transitive integration coupling (A→B→C dependency chains)
 
-### 9.2 Integration Issues
+### Integration Issues
 
 | Issue | Components | Recommendation |
 |-------|-----------|----------------|
 | {{integration_issue_1}} | {{integration_components_1}} | {{integration_recommendation_1}} |
 | {{integration_issue_2}} | {{integration_components_2}} | {{integration_recommendation_2}} |
 
-### 9.3 Gate 8 Verdict
+### Gate 8 Verdict
 
 - [ ] **PASS** — Integrations are local and explicit
 - [ ] **PARTIAL** — Minor integration locality issues
@@ -251,9 +243,9 @@
 
 ---
 
-## 10. Review Gate 9: Runtime Explainability
+## AIOA Review Gate 9: Runtime Explainability
 
-### 10.1 Explainability Assessment
+### Explainability Assessment
 
 **Question:** *Can runtime state be explained?*
 
@@ -263,14 +255,14 @@
 - [ ] Immutable event sourcing used where applicable
 - [ ] State recovery paths are documented
 
-### 10.2 Explainability Issues
+### Explainability Issues
 
 | Issue | Location | Remediation |
 |-------|----------|-------------|
 | {{explainability_issue_1}} | {{explainability_location_1}} | {{explainability_remediation_1}} |
 | {{explainability_issue_2}} | {{explainability_location_2}} | {{explainability_remediation_2}} |
 
-### 10.3 Gate 9 Verdict
+### Gate 9 Verdict
 
 - [ ] **PASS** — Runtime state is explainable
 - [ ] **PARTIAL** — Minor explainability gaps
@@ -278,9 +270,35 @@
 
 ---
 
-## 11. Component Boundary Review
+## Technical Implementation Pattern (TIP) Checks
 
-### 11.1 Boundary Respect Check
+### TIP-002: Semantic Collision Check
+- [ ] No domain concepts with similar names that could be conflated
+- [ ] Semantic value objects used instead of primitive types in domain-critical flows
+- [ ] Naming treated as architecture, not cosmetics
+
+### TIP-006: Declarative Straight-Line Code Check
+- [ ] No manual loops where collection operators would suffice
+- [ ] No hand-written retry logic where retry policies exist
+- [ ] No inline transaction plumbing where transaction boundaries exist
+- [ ] Business code expresses intent, not procedural machinery
+
+### TIP-007: Strict JSON Gateways Check
+- [ ] All input validated at boundary before business logic
+- [ ] DTOs used as typed contracts, not loose JSON
+- [ ] Technical validation separated from business validation
+- [ ] No defensive boilerplate in core business methods
+
+### TIP-009: Auditable DTOs (ADTO) Check
+- [ ] Significant state transitions are self-documenting
+- [ ] Mutation history recorded for business-critical objects
+- [ ] State provenance includes what, who, why, when
+
+---
+
+## Component Boundary Review
+
+### Boundary Respect Check
 
 - [ ] Changes respect defined component boundaries
 - [ ] No unauthorized cross-boundary access
@@ -289,24 +307,24 @@
 
 ---
 
-## 12. Context Flow Review
+## Context Flow Review
 
-### 12.1 Context Flow Impact
+### Context Flow Impact
 
 - [ ] Context flow is maintained or improved
 - [ ] No new "context hotspots" created (areas where many files must be understood together)
 - [ ] Data flow paths are clear and documented
 - [ ] No unnecessary indirection that increases context requirements
 
-### 12.2 Flow Optimization Opportunities
+### Flow Optimization Opportunities
 
 {{flow_optimization_opportunities}}
 
 ---
 
-## 13. Overall AIOA Compliance Summary
+## Overall AIOA Compliance Summary
 
-### 13.1 Gate Scores
+### Gate Scores
 
 | Gate | Score | Notes |
 |------|-------|-------|
@@ -320,20 +338,20 @@
 | **Gate 8: Integration Locality** | 🟢 PASS / 🟡 PARTIAL / 🔴 FAIL | {{il_notes}} |
 | **Gate 9: Runtime Explainability** | 🟢 PASS / 🟡 PARTIAL / 🔴 FAIL | {{re_notes}} |
 
-### 13.2 Required Changes Before Approval
+### Required Changes Before Approval
 
 1. {{required_change_1}}
 2. {{required_change_2}}
 3. {{required_change_3}}
 
-### 13.3 Recommendations
+### Recommendations
 
 - {{recommendation_1}}
 - {{recommendation_2}}
 
 ---
 
-## 14. Final Verdict
+## Final Verdict
 
 - [ ] **APPROVED** — All 9 gates pass; change is AIOA-compliant
 - [ ] **APPROVED WITH COMMENTS** — Minor issues noted, no gate failures

@@ -1,3 +1,9 @@
+---
+description: "Tasks command with AIOA annotations and context budgets"
+scripts:
+  - specify tasks
+---
+
 # speckit.tasks — AIOA-Enhanced Tasks Command
 
 **Preset:** aioa (version 1.0.0)
@@ -93,6 +99,22 @@ aioa:
     inspectable: boolean
 ---
 ```
+
+### TIP-009: Auditable DTOs (ADTO) Pattern
+
+For tasks that create or modify significant state, add these annotations:
+
+#### State Provenance Requirements
+- [ ] Significant state transitions documented
+- [ ] Mutation history includes: what changed, who changed it, why, when
+- [ ] Mutation slices focus on business transitions, not field-level noise
+- [ ] State provenance travels with the object
+
+#### ADTO Implementation Checklist
+- [ ] Created or modified objects have mutation history
+- [ ] History records business-significant transitions only
+- [ ] Each caller method produces one mutation slice
+- [ ] Provenance is accessible to debugging tools and AI agents
 
 ### Step 3: Generate Verification Steps for All Principles
 
