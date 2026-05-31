@@ -36,7 +36,7 @@
 ## Installation
 
 ```bash
-specify preset add https://github.com/undef16/spec-kit-aioa/releases/download/v1.0.0/aioa-preset.zip
+specify preset add https://github.com/undef16/spec-kit-aioa/archive/refs/heads/main.zip
 ```
 
 ### From local folder (development)
