@@ -1,0 +1,47 @@
+schema_version: "1.0"
+
+preset:
+  id: "aioa"
+  version: "1.0.0"
+  name: "AI-Oriented Architecture"
+  description: "Makes AIOA principles executable by AI agents - minimizes Crystallization Radius, preserves Semantic Integrity, enforces Architectural Independence"
+  author: "undef16"
+  tags: ["ai-architecture", "crystallization-radius", "semantic-integrity", "aioa"]
+
+requires:
+  speckit_version: ">=0.8.0"
+
+provides:
+  templates:
+    - type: "template"
+      name: "constitution-template"
+      file: "templates/constitution-template.md"
+      description: "AIOA principles as project constitution"
+    - type: "template"
+      name: "spec-template"
+      file: "templates/spec-template.md"
+      description: "Spec template with AIOA constraints"
+    - type: "template"
+      name: "plan-template"
+      file: "templates/plan-template.md"
+      description: "Plan template with Crystallization Radius checks"
+    - type: "template"
+      name: "tasks-template"
+      file: "templates/tasks-template.md"
+      description: "Task template with Semantic Integrity gates"
+    - type: "template"
+      name: "code-review-template"
+      file: "templates/code-review-template.md"
+      description: "Code review template with AIOA compliance checks"
+    - type: "command"
+      name: "speckit.specify"
+      file: "commands/speckit.specify.md"
+      description: "Enhanced specify command with AIOA guidance"
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/speckit.plan.md"
+      description: "Plan command with architecture checks"
+    - type: "command"
+      name: "speckit.tasks"
+      file: "commands/speckit.tasks.md"
+      description: "Tasks command with AIOA validation steps"
