@@ -62,10 +62,6 @@ Think of a component as a crystal in a solution. The "radius" is how far you mus
 
 ## Why It Matters for AI Agents
 
-AI agents operate with **bounded context windows**. They cannot hold an entire large codebase in memory simultaneously. Every architectural decision that expands context requirements makes it harder for agents to work safely.
-
-### The Cost of High Crystallization Radius
-
 | Cost Factor | Low Radius (1–3) | Medium Radius (4–8) | High Radius (9+) |
 |------------|------------------|---------------------|------------------|
 | **Context loading time** | Seconds | Minutes | May hit context limits |
@@ -87,163 +83,43 @@ AIOA's Crystallization Radius principle breaks these chains by:
 
 ## Measuring Crystallization Radius
 
-### Step-by-Step Measurement
-
-#### Step 1: Identify the Component
-
 ```
-Component: UserAuthentication
-Files: src/auth/user-auth.ts
-Responsibility: Handle user login, logout, session management
-```
+Component: UserAuthentication  (src/auth/user-auth.ts)
 
-#### Step 2: Count Direct Dependencies
+Direct dependencies (5):
+  src/auth/session.ts, src/auth/password.ts, src/user/user-repo.ts,
+  src/shared/types/user.ts, src/config/auth.config.ts
 
-Files that the component directly imports or references:
+Transitive dependencies (3):
+  session.ts → src/shared/crypto.ts, src/config/session.config.ts
+  user-repo.ts → src/db/connection.ts
 
-```
-src/auth/user-auth.ts
-  imports:
-    - src/auth/session.ts        (1)
-    - src/auth/password.ts       (2)
-    - src/user/user-repo.ts      (3)
-    - src/shared/types/user.ts   (4)
-    - src/config/auth.config.ts  (5)
-Direct dependency count: 5
-```
+Implicit dependencies (4):
+  global event bus, environment variables, API contract, logging convention
 
-#### Step 3: Count Transitive Dependencies
-
-Dependencies of dependencies that affect behavior:
-
-```
-src/auth/session.ts
-  imports:
-    - src/shared/crypto.ts       (6)
-    - src/config/session.config.ts (7)
-
-src/user/user-repo.ts
-  imports:
-    - src/db/connection.ts       (8)
-    - src/shared/types/user.ts   (already counted)
-
-Transitive new count: 3
-```
-
-#### Step 4: Identify Implicit Dependencies
-
-Dependencies not visible in code but required for safe changes:
-
-```
-- Global event bus (emits auth events consumed elsewhere)  (9)
-- Environment variables expected by auth config             (10)
-- API contract with auth service (if deployed separately)  (11)
-- Logging convention (format expected by monitoring)        (12)
-
-Implicit dependency count: 4
-```
-
-#### Step 5: Calculate Total Context
-
-```
-Total Context = Direct + Transitive + Implicit
-              = 5 + 3 + 4
-              = 12 context units
-
+Total Context = Direct(5) + Transitive(3) + Implicit(4) = 12 CU
 Rating: HIGH (≥9)
 ```
 
-### Context Surface Map
-
-A visualization of the component's context surface:
-
-```
-┌─────────────────────────────────────────────────┐
-│                UserAuthentication                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
-│  │ session  │  │ password │  │ user-repo    │   │
-│  └────┬─────┘  └──────────┘  └──────┬───────┘   │
-│       │                             │            │
-│  ┌────▼─────┐                 ┌─────▼──────┐    │
-│  │  crypto  │                 │  db conn   │    │
-│  └──────────┘                 └────────────┘    │
-│                                                  │
-│  Implicit: [event bus] [env vars] [API][logging]│
-└─────────────────────────────────────────────────┘
-```
+**Context surface:** 3 dependency layers (direct → transitive → implicit). Agent loads 12 files before safely modifying this component.
 
 ---
 
 ## The Three Rating Levels
 
-### 🟢 LOW — Crystallization Radius: 1–3
+| Rating | Radius | Characteristics | Example |
+|--------|--------|----------------|---------|
+| 🟢 LOW | 1–3 | Self-contained, minimal ext. deps, changes have low side-effect risk | `EmailValidator` — 2 files: self + shared type |
+| 🟡 MEDIUM | 4–8 | Several well-defined deps, moderate preparation, some cross-module understanding | `OrderService` — 6 files across 3 modules |
+| 🔴 HIGH | 9+ | Entangled with many parts, extensive context, **architecture review required** | `LegacyOrderManager` — 14 files, 3 dep layers |
 
-**Characteristics:**
-- Self-contained component with minimal external dependencies
-- Agent can understand and modify with only the component's own code
-- Changes have minimal risk of unintended side effects
+### Typical Candidates
 
-**Typical candidates:**
-- Pure utility functions
-- Leaf components with no dependents
-- Value objects and domain primitives
-
-**Example:**
-```
-Component: EmailValidator
-Context budget: 2 files
-  - src/validation/email.ts (self)
-  - src/shared/types/email.ts (shared type)
-Radius: LOW
-```
-
-### 🟡 MEDIUM — Crystallization Radius: 4–8
-
-**Characteristics:**
-- Component has several dependencies but they are well-defined
-- Agent needs moderate preparation to work safely
-- Some cross-module understanding required
-
-**Typical candidates:**
-- Service components with injected dependencies
-- Aggregate roots in domain-driven design
-- Controllers with well-defined service dependencies
-
-**Example:**
-```
-Component: OrderService
-Context budget: 6 files
-  - src/orders/order-service.ts (self)
-  - src/orders/order.ts (domain model)
-  - src/orders/order-repo.ts (dependency)
-  - src/payments/payment-service.ts (dependency)
-  - src/inventory/inventory-service.ts (dependency)
-  - src/shared/types/order.ts (shared type)
-Radius: MEDIUM
-```
-
-### 🔴 HIGH — Crystallization Radius: 9+
-
-**Characteristics:**
-- Component entangled with many other parts of the system
-- Agent must load extensive context to work safely
-- High risk of unintended side effects
-- **Requires architectural review before any change**
-
-**Typical candidates:**
-- God classes and god modules
-- Cross-cutting concerns (logging, metrics, audit) scattered through implementation
-- Components with implicit dependencies and global state
-
-**Example:**
-```
-Component: LegacyOrderManager
-Context budget: 14 files
-  - 6 direct dependencies
-  - 4 transitive dependencies
-  - 4 implicit dependencies
-Radius: HIGH (REQUIRES ARCHITECTURE REVIEW)
-```
+| Rating | Candidates |
+|--------|-----------|
+| LOW | Pure utility functions, leaf components, value objects, domain primitives |
+| MEDIUM | Services with injected dependencies, aggregate roots, controllers with well-defined deps |
+| HIGH | God classes/modules, cross-cutting concerns, components with implicit deps and global state |
 
 ### Rating Migration Rules
 
@@ -262,126 +138,75 @@ Radius: HIGH (REQUIRES ARCHITECTURE REVIEW)
 
 ### Technique 1: Dependency Inversion
 
-**Problem:** Component depends on concrete implementations, pulling in their transitive dependencies.
-
-**Solution:** Depend on interfaces, not implementations.
+Reduction: 30–50%
 
 ```typescript
-// BAD: High Crystallization Radius
-class OrderService {
-  constructor(private db: PostgreSQLRepository) {}
-  // Agent must understand PostgreSQLRepository to modify OrderService
-}
+// Problem: concrete deps pull in transitive chains. Solution: depend on interfaces.
+// BAD:
+class OrderService { constructor(private db: PostgreSQLRepository) {} }
 
-// GOOD: Low Crystallization Radius
-class OrderService {
-  constructor(private orders: OrderRepository) {}
-  // Agent only needs to understand the OrderRepository interface
-}
+// GOOD:
+class OrderService { constructor(private orders: OrderRepository) {} }
 ```
-
-**Radius reduction:** 30–50% by eliminating transitive dependencies from context.
 
 ### Technique 2: Narrow Interfaces
 
-**Problem:** Wide interfaces expose many functions, each with its own context.
-
-**Solution:** Narrow interfaces that expose only what's needed.
+Reduction: 40–60%
 
 ```typescript
-// BAD: Wide interface — agent needs context for all 15 methods
-interface UserService {
-  createUser(): User;
-  updateUser(): User;
-  deleteUser(): void;
-  getUser(): User;
-  listUsers(): User[];
-  banUser(): void;
-  unbanUser(): void;
-  // ... 8 more methods
-}
-
-// GOOD: Narrow interface — agent needs context for 3 methods
-interface UserCreator {
-  create(data: CreateUserInput): User;
-}
-interface UserQuery {
-  findById(id: UserId): User | null;
-}
-interface UserAdmin {
-  suspend(id: UserId): void;
-}
+// Problem: wide interface exposes 15 methods, each with its own context.
+// Solution: split by role into small interfaces.
+// BAD:
+interface UserService { createUser(); updateUser(); deleteUser(); getUser(); listUsers(); banUser(); unbanUser(); /* 8 more */ }
+// GOOD:
+interface UserCreator { create(data: CreateUserInput): User; }
+interface UserQuery   { findById(id: UserId): User | null; }
+interface UserAdmin   { suspend(id: UserId): void; }
 ```
-
-**Radius reduction:** 40–60% by reducing the surface area an agent must understand.
 
 ### Technique 3: Explicit Dependency Declaration
 
-**Problem:** Dependencies are implicit — discovered only through code reading or tribal knowledge.
-
-**Solution:** Declare all dependencies explicitly.
+Reduction: 20–40%
 
 ```typescript
-// BAD: Hidden dependencies
+// Problem: implicit deps (global logger, env vars, event bus) require tribal knowledge.
+// Solution: inject all dependencies via constructor.
+// BAD:
 class PaymentProcessor {
   processPayment(amount: number): void {
-    // Uses global logger — implicit dependency
     logger.info(`Processing payment: ${amount}`);
-    // Expects environment variable — implicit dependency
     const apiKey = process.env.PAYMENT_API_KEY;
-    // Emits event — implicit dependency for consumers
     eventBus.emit('payment.processed', { amount });
   }
 }
-
-// GOOD: Explicit dependencies
+// GOOD:
 class PaymentProcessor {
   constructor(
     private readonly logger: Logger,
     private readonly config: PaymentConfig,
     private readonly events: EventPublisher
   ) {}
-
   processPayment(amount: number): void {
     this.logger.info(`Processing payment: ${amount}`);
-    const apiKey = this.config.paymentApiKey;
     this.events.publish(new PaymentProcessed(amount));
   }
 }
 ```
 
-**Radius reduction:** 20–40% by making hidden context visible and bounded.
-
 ### Technique 4: Locality of Behavior
 
-**Problem:** Related behavior is scattered across the codebase, requiring broad context.
-
-**Solution:** Keep related behavior close together.
+Reduction: 50%+
 
 ```typescript
-// BAD: Scattered behavior
-// src/validation/email.ts — email format validation
-// src/notifications/email.ts — email sending logic
-// src/user/email.ts — user email preferences
-// src/templates/email.ts — email templates
-// → Agent needs 4 files to understand "email"
-
-// GOOD: Local behavior
-// src/email/
-//   email.ts — core types and validation
-//   email-sender.ts — sending logic
-//   email-preferences.ts — user preferences
-//   email-templates.ts — templates
-// → Agent needs 1 directory (4 related files) to understand "email"
+// Problem: related behavior scattered across codebase (4 dirs for "email").
+// Solution: keep related files in one directory.
+// BAD: src/validation/email.ts, src/notifications/email.ts, src/user/email.ts, src/templates/email.ts
+// GOOD: src/email/ { email.ts, email-sender.ts, email-preferences.ts, email-templates.ts }
 ```
-
-**Radius reduction:** 50%+ by reducing search surface for related code.
 
 ### Technique 5: Context Budget Annotations
 
-**Problem:** Agents don't know how much context is needed until they start working.
-
-**Solution:** Annotate every module with its context budget.
+Reduction: N/A (makes radius visible — prevents surprise expansion)
 
 ```typescript
 /**
@@ -390,45 +215,17 @@ class PaymentProcessor {
  * - src/shared/types/user.ts
  * - src/auth/session.ts
  * - src/config/auth.config.ts
- * 
+ *
  * Crystallization Radius: MEDIUM (5 files)
  */
-export class UserService {
-  // ...
-}
+export class UserService { /* ... */ }
 ```
-
-**Radius reduction:** N/A (doesn't reduce radius, but makes it visible — preventing surprise context expansion).
 
 ---
 
 ## Tracking Over Time
 
-### Crystallization Radius Registry
-
-Maintain a registry of component Crystallization Radius measurements:
-
-```yaml
-# .aioa/radius-registry.yml
-version: "1.0"
-components:
-  - name: UserAuthentication
-    path: src/auth/user-auth.ts
-    measured_radius: 12
-    rating: HIGH
-    trend: ↑ worsening
-    last_measured: 2026-05-30
-  - name: EmailValidator
-    path: src/validation/email-validator.ts
-    measured_radius: 2
-    rating: LOW
-    trend: → stable
-    last_measured: 2026-05-28
-```
-
 ### Trend Analysis
-
-Track Crystallization Radius over time to detect architectural erosion:
 
 ```
 Component: UserAuthentication
@@ -455,21 +252,11 @@ Any change that increases a component's Crystallization Radius should trigger:
 
 ## Context Budget System
 
-### Budget Definition
+Every component has a **context budget** — the maximum CU an agent needs to work safely.
 
-Every component has a **context budget** — the maximum number of context units an agent should need to load to work on it safely.
-
-```yaml
-context_budget:
-  max_units: 8           # Hard limit
-  current: 5             # Current measurement
-  warning_threshold: 6   # Triggers warning
-  critical_threshold: 8  # Triggers blocking review
-```
+Example: `max_units: 8, current: 5, warning_at: 6, critical_at: 8`
 
 ### Budget Allocation
-
-When planning work, allocate context budget to each task:
 
 | Task | Context Budget | Files | Rating |
 |------|---------------|-------|--------|
@@ -479,10 +266,7 @@ When planning work, allocate context budget to each task:
 
 ### Enforcing Budgets
 
-Budgets are enforced during:
-1. **Planning** — if a task exceeds budget, it must be split
-2. **Code review** — if a change increases budget without justification, it's flagged
-3. **CI pipeline** — automated checks compare budget deltas
+Budgets enforced during: **Planning** (split if exceeded), **Code review** (flag unjustified increases), **CI pipeline** (automated delta checks).
 
 ---
 
@@ -499,90 +283,27 @@ AIOA prescribes tools to automatically measure Crystallization Radius:
 
 ### CI Integration
 
-```yaml
-# .github/workflows/aioa-checks.yml
-name: AIOA Radius Check
-on: [pull_request]
-jobs:
-  radius-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Measure Crystallization Radius
-        run: aioa measure-radius --diff HEAD~1
-      - name: Check Budgets
-        run: aioa check-budgets
-      - name: Flag Regressions
-        run: aioa flag-regressions --threshold 2
-```
-
-### PR Comments
-
-When a change increases Crystallization Radius, automated comments can flag it:
-
-```
-⚠️ **Crystallization Radius Warning**
-
-Component `UserAuthentication` context budget:
-- Before: 5 units (MEDIUM)
-- After:  7 units (MEDIUM) 
-- Delta:  +2 units
-
-This is within acceptable range, but please ensure:
-1. The new dependency is truly necessary
-2. The context budget annotation is updated
-3. No implicit dependencies were added
-
-Review with AIOA principles in mind.
-```
+- `aioa measure-radius --diff HEAD~1` on every pull request
+- `aioa check-budgets` to validate against declared budgets
+- `aioa flag-regressions --threshold 2` to catch increases ≥2 CU
+- Block merges exceeding critical thresholds (🔴 RED alerts)
 
 ---
 
 ## Examples
 
-### Example 1: Well-Isolated Component (LOW)
-
-```typescript
-/**
- * Validates email addresses according to RFC 5322.
- * 
- * @context-budget
- * - self: src/validation/email.ts
- * - shared type: src/shared/types/email.ts
- * 
- * Crystallization Radius: LOW (2 units)
- */
-export class EmailValidator {
-  validate(email: string): EmailAddress | ValidationError {
-    // Implementation uses only string operations
-    // No dependencies on other modules
-    // No global state
-    // No configuration files
-  }
-}
-```
-
-**Context surface:**
-```
-EmailValidator → EmailAddress (shared type)
-     ↓
-  (nothing else)
-```
-
-### Example 2: Well-Structured Service (MEDIUM)
+### Example 1: Well-Structured Service (MEDIUM)
 
 ```typescript
 /**
  * Manages user registration workflow.
- * 
  * @context-budget
  * - self: src/users/registration.ts
  * - domain: src/users/user.ts
- * - repository: src/users/user-repository.ts (interface only)
- * - auth: src/auth/password-hasher.ts (interface only)
- * - notification: src/notifications/email-sender.ts (interface only)
+ * - repository: src/users/user-repository.ts (interface)
+ * - auth: src/auth/password-hasher.ts (interface)
+ * - notification: src/notifications/email-sender.ts (interface)
  * - types: src/shared/types/user.ts
- * 
  * Crystallization Radius: MEDIUM (6 units)
  */
 export class RegistrationService {
@@ -600,23 +321,14 @@ export class RegistrationService {
 }
 ```
 
-**Context surface:**
-```
-RegistrationService → UserRepository (interface)
-                   → PasswordHasher (interface)
-                   → EmailSender (interface)
-                   → User (type)
-                   → RegistrationInput (type)
-     ↓
-  (interfaces are narrow, no transitive leakage)
-```
+**Context surface:** All dependencies are narrow interfaces — no transitive leakage.
 
-### Example 3: Entangled Legacy Module (HIGH) — Demonstrates Refactoring
+### Example 2: Entangled Legacy Module (HIGH) — Demonstrates Refactoring
 
 ```typescript
 /**
  * Manages orders (too many responsibilities).
- * 
+ *
  * @context-budget
  * - self: src/orders/order-manager.ts
  * - model: src/orders/order.ts
@@ -630,9 +342,9 @@ RegistrationService → UserRepository (interface)
  * - events: src/events/event-bus.ts
  * - types: src/shared/types/order.ts
  * - caching: src/cache/redis-cache.ts
- * 
+ *
  * Crystallization Radius: HIGH (12 units)
- * 
+ *
  * Refactoring plan:
  * 1. Extract payment processing → PaymentService (3 units)
  * 2. Extract shipping logic → ShippingService (3 units)
@@ -664,66 +376,16 @@ OrderService → OrderRepository (interface)
              → PaymentService (interface)
              → ShippingService (interface)
              → NotificationService (interface)
-     ↓
-  (each dependency is a narrow interface)
 ```
 
 ---
 
 ## Anti-Patterns
 
-### 1. The God Module
-
-Every module ends up importing from the god module, creating high transitive context.
-
-**Detection:** A single module appears in 50%+ of other modules' dependency lists.
-
-**Fix:** Split into focused sub-modules. Extract unrelated functionality.
-
-### 2. Implicit Context Ocean
-
-"Everyone knows" conventions, global state, shared configuration files.
-
-**Detection:** Changes to module X break module Y despite no visible dependency.
-
-**Fix:** Make all dependencies explicit. Replace global state with injected dependencies.
-
-### 3. Deep Inheritance Chains
-
-Modifying a subclass requires understanding the entire ancestor chain.
-
-**Detection:** Class hierarchies with depth > 3.
-
-**Fix:** Prefer composition over inheritance. Flatten deep hierarchies.
-
-### 4. Context-Free Interfaces
-
-Interfaces that don't document their context requirements.
-
-**Detection:** No `@context-budget` annotations in codebase.
-
-**Fix:** Add context budget annotations to every public interface.
-
-### 5. Happy-Path Architecture
-
-Architecture optimized for the happy path only, with error handling and edge cases scattered as afterthoughts.
-
-**Detection:** Error handling code far from the logic that produces errors.
-
-**Fix:** Use result types, locate error handling near the producing logic.
-
----
-
-## Conclusion
-
-Crystallization Radius is the foundational AIOA principle because it directly addresses the core challenge of AI-assisted software development: **context comprehension**.
-
-By measuring, tracking, and minimizing the context required to make safe changes, AIOA enables:
-
-- Higher confidence AI code generation
-- Lower regression rates
-- Faster agent onboarding to existing codebases
-- Clear architectural quality metrics
-- Early detection of architectural erosion
-
-**Start measuring today. Your AI agents will thank you.**
+| Anti-Pattern | Detection | Fix |
+|-------------|-----------|-----|
+| **The God Module** — everything imports from it | Module appears in 50%+ of dependency lists | Split into focused sub-modules |
+| **Implicit Context Ocean** — "everyone knows" conventions, global state | Module X breaks Y with no visible dependency | Make all deps explicit; inject instead of global state |
+| **Deep Inheritance Chains** — subclass requires understanding entire ancestor chain | Class hierarchies with depth > 3 | Prefer composition; flatten hierarchies |
+| **Context-Free Interfaces** — no documented context requirements | No `@context-budget` annotations | Add annotations to every public interface |
+| **Happy-Path Architecture** — error handling scattered as afterthought | Error handling far from producing logic | Use result types; locate error handling near source |

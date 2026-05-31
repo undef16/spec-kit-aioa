@@ -5,203 +5,85 @@
 
 > **AIOA Preset Active** — This task includes full AIOA principle verification (all 10 principles).
 
----
-
 ## AIOA Context Budget
 
 | Context Item | Details |
 |-------------|---------|
-| **Files to read** | {{files_to_read}} |
-| **Files to modify** | {{files_to_modify}} |
-| **Cross-module context needed** | {{cross_module_context}} |
-| **Context budget** | {{context_budget}} (Low / Medium / High) |
-
----
+| Files to read | {{files_to_read}} |
+| Files to modify | {{files_to_modify}} |
+| Cross-module context | {{cross_module_context}} |
+| Context budget | {{context_budget}} (Low / Medium / High) |
 
 ## AIOA Principle Checks
 
-### P1: Local Reasoning Check
+### P1: Local Reasoning
+- [ ] Understandable from local context · [ ] External requirements documented · [ ] No global state/ambient conventions needed
 
-- [ ] Task can be understood from local context alone
-- [ ] All external context requirements are explicitly documented
-- [ ] No global state or ambient conventions required for understanding
-
-### P2: Crystallization Radius Verification
-
-**Pre-Implementation Check:**
-- [ ] Agent has loaded all context files listed above ({{context_budget}} items)
-- [ ] All implicit dependencies are identified and understood
-- [ ] The Crystallization Radius of the affected component(s) is known
-- [ ] This task does NOT expand the Crystallization Radius beyond the current component boundaries
-
-**Radius Impact Analysis:**
-
-**Current Crystallization Radius:** {{current_radius}}
-**Expected after change:** {{expected_radius}}
-**Delta:** {{radius_delta}}
-
-**If expanding:** {{radius_expansion_rationale}}
-
-**Context Surface Map:**
+### P2: Crystallization Radius
+- [ ] All context files loaded ({{context_budget}} items) · [ ] Implicit dependencies identified · [ ] Radius of affected component(s) known · [ ] Change does NOT expand radius beyond current boundaries
+| Current radius | {{current_radius}} | Expected | {{expected_radius}} | Delta | {{radius_delta}} |
+| If expanding | {{radius_expansion_rationale}} |
 
 ```
 {{context_surface_map}}
 ```
 
-### P3: Semantic Integrity Validation
-
-**Boundaries Crossed:**
-
-| Boundary | Direction | Data/Behavior Crossing | Integrity Risk |
-|----------|-----------|----------------------|----------------|
+### P3: Semantic Integrity
+| Boundary | Direction | Data Crossing | Integrity Risk |
+|----------|-----------|--------------|----------------|
 | {{boundary_1}} | {{direction_1}} | {{data_1}} | {{risk_1}} |
 | {{boundary_2}} | {{direction_2}} | {{data_2}} | {{risk_2}} |
 
-**Integrity Gates:**
+**Gate 1 — Shared Types:** [ ] Correct versions at boundaries · [ ] No casting without contract · [ ] Boundary parsing validated
+**Gate 2 — Parse Don't Validate (TIP-007):** [ ] External data parsed at boundary · [ ] Internal logic on trusted types · [ ] No defensive checks in core
+**Gate 3 — No Silent Transformations:** [ ] Every transformation explicit · [ ] Governed by semantic contract · [ ] Tested for meaning preservation
 
-**Gate 1 — Shared Types Consistent:**
-- [ ] All shared types used at boundaries are the correct version
-- [ ] No type casting or transformation without explicit contract
-- [ ] Boundary parsing is validated
+### P4: Boundaries Explicit
+- [ ] Every boundary crossed declared · [ ] Access through declared interfaces · [ ] No implicit boundaries · [ ] Component responsibilities respected
 
-**Gate 2 — Parse Don't Validate (TIP-007):**
-- [ ] External data is parsed into trusted types at the boundary
-- [ ] Internal logic operates on trusted types only
-- [ ] No defensive checks in core logic for data that has already been parsed
+### P5: Contracts Deterministic
+- [ ] Machine-verifiable schemas · [ ] Schema enforced at boundaries · [ ] Breaking changes require version bump · [ ] Consumer-driven contracts satisfied
 
-**Gate 3 — No Silent Transformations:**
-- [ ] Every data transformation at a boundary is explicit
-- [ ] Transformation logic is governed by a semantic contract
-- [ ] Transformations are tested for meaning preservation
+### P6: Control-Flow Complexity
+- [ ] Linear/declarative where possible · [ ] No deeply nested conditionals (depth > 3) · [ ] Mutable state localized/minimized · [ ] Complex flow replaced with declarative ops
 
-### P4: Boundaries Explicit Check
+### P7: Reasoning Boundaries ≠ Deployment
+- [ ] No infra deps in core logic · [ ] Interfaces deployment-agnostic · [ ] No topology assumptions · [ ] Infra isolated to deployment boundary
 
-- [ ] Every boundary crossed is explicitly declared
-- [ ] Cross-boundary access occurs only through declared interfaces
-- [ ] No implicit boundaries are crossed
-- [ ] Component responsibilities are respected
+### P8: Extract Under Reuse
+- [ ] New abstractions have ≥2 consumers · [ ] No speculative abstractions · [ ] Existing abstractions justified
 
-### P5: Contracts Deterministic Check
+### P9: Event Boundaries
+- [ ] Event bus for cross-component communication (TIP-008) · [ ] Direct sync calls = exceptions with rationale · [ ] Event schemas versioned/shared · [ ] Handlers idempotent
 
-- [ ] All interfaces in this task have machine-verifiable schemas
-- [ ] Schema validation is enforced at boundaries
-- [ ] Breaking changes to contracts require version bump
-- [ ] Consumer-driven contracts are satisfied
-
-### P6: Control-Flow Complexity Check
-
-- [ ] Code is linear and declarative where possible
-- [ ] No deeply nested conditionals (depth > 3)
-- [ ] Mutable state is localized and minimized
-- [ ] Complex control flow is replaced with declarative operations
-
-### P7: Reasoning Boundaries not Deployment Check
-
-- [ ] No infrastructure dependencies in core logic
-- [ ] All interfaces remain deployment-agnostic
-- [ ] No topology assumptions in implementation
-- [ ] Infrastructure concerns isolated to deployment boundary
-
-### P8: Extract Under Reuse Pressure Check
-
-- [ ] Any new abstractions have sufficient reuse pressure (≥2 consumers)
-- [ ] No speculative abstractions introduced
-- [ ] Existing abstractions are justified
-
-### P9: Event Boundaries Check
-
-- [ ] Cross-component communication uses event bus where feasible (TIP-008)
-- [ ] Direct synchronous calls are exceptions with documented rationale
-- [ ] Event schemas are versioned and shared
-- [ ] Event handlers are idempotent
-
-### P10: Runtime State Explainability Check
-
-- [ ] State mutations have provenance records (who, what, when, why)
-- [ ] State is inspectable without side effects
-- [ ] ADTO pattern followed: DTOs carry `_provenance` field (TIP-009)
-- [ ] Immutable event sourcing considered
-
----
+### P10: Runtime State Explainability
+- [ ] State mutations have provenance (who, what, when, why) · [ ] State inspectable without side effects · [ ] ADTO: DTOs carry `_provenance` (TIP-009) · [ ] Event sourcing considered
 
 ## AIOA Implementation Step Checks
 
-### Step 1: {{implementation_step_1}}
-- {{detail_1}}
-- {{detail_2}}
-- **AIOA check:** {{aioa_check_1}}
-
-### Step 2: {{implementation_step_2}}
-- {{detail_1}}
-- {{detail_2}}
-- **AIOA check:** {{aioa_check_2}}
-
-### Step 3: {{implementation_step_3}}
-- {{detail_1}}
-- {{detail_2}}
-- **AIOA check:** {{aioa_check_3}}
-
----
+| Step | Details | AIOA Check |
+|------|---------|------------|
+| 1: {{implementation_step_1}} | {{detail_1}}; {{detail_2}} | {{aioa_check_1}} |
+| 2: {{implementation_step_2}} | {{detail_1}}; {{detail_2}} | {{aioa_check_2}} |
+| 3: {{implementation_step_3}} | {{detail_1}}; {{detail_2}} | {{aioa_check_3}} |
 
 ## AIOA Compliance Checklist
 
-**P1 Local Reasoning:**
-- [ ] Task is understandable from local context
-- [ ] External context requirements are documented
-
-**P2 Crystallization Radius:**
-- [ ] Crystallization Radius did not regress
-- [ ] Context budget annotations are accurate
-- [ ] No new implicit dependencies introduced
-- [ ] Change is self-contained within its context budget
-
-**P3 Semantic Integrity:**
-- [ ] Shared types are used consistently across boundaries
-- [ ] Boundary parsing follows the "Parse, Don't Validate" pattern (TIP-007)
-- [ ] No silent data transformations introduced
-- [ ] Semantic contracts are versioned and compatible
-
-**P4 Boundaries Explicit:**
-- [ ] All boundaries are explicitly declared
-- [ ] No boundary violations introduced
-
-**P5 Contracts Deterministic:**
-- [ ] All interfaces have machine-verifiable schemas
-- [ ] Schema validation is enforced
-
-**P6 Declarative Straight-Line:**
-- [ ] Code is linear and declarative
-- [ ] No complex control flow introduced
-
-**P7 Reasoning Boundaries not Deployment:**
-- [ ] No infrastructure dependencies leaked into core logic
-- [ ] Component interfaces remain deployment-agnostic
-- [ ] No topology assumptions encoded in implementation
-
-**P8 Extract Under Reuse Pressure:**
-- [ ] No premature abstractions
-- [ ] Shared code extracted based on reuse pressure only
-
-**P9 Event Boundaries:**
-- [ ] Cross-component communication is event-driven
-- [ ] Direct calls are justified exceptions
-
-**P10 Runtime State Explainable:**
-- [ ] State is auditable with provenance records
-- [ ] ADTO pattern is followed
-
----
+| # | Principle | Verification |
+|--:|-----------|-------------|
+| P1 | Local Reasoning | [ ] Task understandable locally · [ ] External requirements documented |
+| P2 | Crystallization Radius | [ ] Radius didn't regress · [ ] Budget annotations accurate · [ ] No implicit deps · [ ] Change self-contained |
+| P3 | Semantic Integrity | [ ] Shared types consistent · [ ] Parse Don't Validate (TIP-007) · [ ] No silent transformations · [ ] Contracts versioned |
+| P4 | Boundaries Explicit | [ ] All boundaries declared · [ ] No boundary violations |
+| P5 | Contracts Deterministic | [ ] Machine-verifiable schemas · [ ] Validation enforced |
+| P6 | Declarative Straight-Line | [ ] Linear/declarative · [ ] No complex control flow |
+| P7 | Reasoning ≠ Deployment | [ ] No infra deps in core · [ ] Interfaces agnostic · [ ] No topology assumptions |
+| P8 | Extract Under Reuse | [ ] No premature abstractions · [ ] Extracted based on reuse pressure only |
+| P9 | Event Boundaries | [ ] Cross-component comm is event-driven · [ ] Direct calls justified |
+| P10 | Runtime State Explainable | [ ] State auditable with provenance · [ ] ADTO pattern followed |
 
 ## AIOA Post-Completion
 
-### Context Budget Update
-- [ ] Context budget documentation updated (if changed)
-- [ ] Crystallization Radius re-evaluated and documented
-
-### Semantic Integrity Sign-off
-- [ ] All integrity gates passed
-- [ ] Semantic contracts are satisfied
-
-### Principle Compliance Sign-off
-- [ ] All 10 AIOA principles verified
-- [ ] Any principle violations documented and addressed
+- [ ] **Context Budget:** Updated if changed; Crystallization Radius re-evaluated
+- [ ] **Semantic Integrity:** All integrity gates passed; contracts satisfied
+- [ ] **Principle Compliance:** All 10 AIOA principles verified; violations documented

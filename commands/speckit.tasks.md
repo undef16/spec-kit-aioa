@@ -8,40 +8,17 @@ scripts:
 
 **Preset:** aioa (version 1.0.0)
 
-This command overrides the standard `specify tasks` flow to generate AIOA-validated tasks with verification of all 10 AIOA principles built into every task.
-
----
-
-## Overview
-
-When invoked, this command:
-1. Decomposes the plan into AIOA-annotated tasks
-2. Includes verification checks for all 10 AIOA principles in every task
-3. Adds integrity gates at every boundary crossing
-4. Validates runtime state explainability requirements
-5. Orders tasks to minimize context switching
-
 ---
 
 ## Workflow
 
 ### Step 1: Load Plan with AIOA Context
 
-Read the plan and extract:
-- ADRs with all AIOA principle analysis
-- Component boundary definitions
-- Semantic Integrity checkpoints
-- Context flow maps
-- Runtime state explainability plans
-- Communication patterns (event vs direct)
+Read the plan and extract: ADRs, component boundaries, Semantic Integrity checkpoints, context flow maps, runtime state explainability plans, communication patterns.
 
 ### Step 2: Decompose into AIOA-Annotated Tasks
 
-For each step in the plan, create a task with full AIOA annotations:
-
-> **Each task includes checks for all 10 AIOA principles.**
-
-**Task AIOA Annotation Structure:**
+For each plan step, create a task with full AIOA annotations:
 
 ```
 ---
@@ -102,215 +79,140 @@ aioa:
 
 ### TIP-009: Auditable DTOs (ADTO) Pattern
 
-For tasks that create or modify significant state, add these annotations:
+For tasks modifying significant state:
 
-#### State Provenance Requirements
+**State Provenance Requirements:**
 - [ ] Significant state transitions documented
-- [ ] Mutation history includes: what changed, who changed it, why, when
+- [ ] Mutation history includes: what, who, why, when
 - [ ] Mutation slices focus on business transitions, not field-level noise
 - [ ] State provenance travels with the object
 
-#### ADTO Implementation Checklist
-- [ ] Created or modified objects have mutation history
+**ADTO Implementation Checklist:**
+- [ ] Created/modified objects have mutation history
 - [ ] History records business-significant transitions only
-- [ ] Each caller method produces one mutation slice
-- [ ] Provenance is accessible to debugging tools and AI agents
+- [ ] Each caller produces one mutation slice
+- [ ] Provenance accessible to debugging and AI agents
 
 ### Step 3: Generate Verification Steps for All Principles
 
-For each task, generate explicit verification steps for all 10 principles:
+For each task, generate verification checks:
 
 **P1 — Local Reasoning Check:**
-```
-## Local Reasoning Check
-- [ ] Task can be understood from local context alone
-- [ ] All external context requirements are documented
+- [ ] Task understandable from local context alone
+- [ ] External context requirements documented
 - [ ] No global state or ambient conventions required
-```
 
 **P2 — Crystallization Radius Check:**
-```
-## Crystallization Radius Check
 - [ ] Agent has loaded all context files (budget: {n})
-- [ ] Task does not expand Crystallization Radius beyond component boundaries
+- [ ] Task does not expand radius beyond component boundaries
 - [ ] No new implicit dependencies introduced
 - [ ] Context budget annotations remain accurate after change
-```
 
 **P3 — Semantic Integrity Check:**
-```
-## Semantic Integrity Check
-- [ ] Shared types are used consistently at boundaries
-- [ ] "Parse, Don't Validate" pattern is followed at boundaries (TIP-007)
+- [ ] Shared types used consistently at boundaries
+- [ ] "Parse, Don't Validate" at boundaries (TIP-007)
 - [ ] No silent data transformations introduced
-- [ ] Semantic contracts are satisfied
-```
+- [ ] Semantic contracts satisfied
 
 **P4 — Boundaries Explicit Check:**
-```
-## Boundaries Explicit Check
 - [ ] Every boundary crossed is explicitly declared
-- [ ] Access occurs through declared interfaces only
+- [ ] Access through declared interfaces only
 - [ ] No implicit boundaries crossed
-```
 
 **P5 — Contracts Deterministic Check:**
-```
-## Contracts Deterministic Check
 - [ ] All interfaces have machine-verifiable schemas
-- [ ] Schema validation is enforced at boundaries (TIP-007)
-- [ ] Contract versions are compatible
-```
+- [ ] Schema validation enforced at boundaries (TIP-007)
+- [ ] Contract versions compatible
 
 **P6 — Control-Flow Simplicity Check:**
-```
-## Control-Flow Simplicity Check
 - [ ] Code is linear and declarative where possible
 - [ ] No deeply nested conditionals (depth > 3)
-- [ ] Mutable state is localized and minimized
-```
+- [ ] Mutable state localized and minimized
 
-**P7 — Reasoning Boundaries not Deployment Check:**
-```
-## Architecture Independence Check
+**P7 — Architecture Independence Check:**
 - [ ] No infrastructure dependencies in core logic
-- [ ] All interfaces remain deployment-agnostic
+- [ ] All interfaces deployment-agnostic
 - [ ] No topology assumptions in implementation
-```
 
 **P8 — Extract Under Reuse Pressure Check:**
-```
-## Extract Under Reuse Pressure Check
-- [ ] Any new abstractions have ≥2 confirmed consumers
+- [ ] New abstractions have ≥2 confirmed consumers
 - [ ] No speculative abstractions introduced
-- [ ] Shared code extracted based on reuse pressure only
-```
+- [ ] Shared code extracted only under reuse pressure
 
 **P9 — Event Boundaries Check:**
-```
-## Event Boundaries Check
-- [ ] Cross-component communication uses event bus where feasible (TIP-008)
-- [ ] Direct synchronous calls are exceptions with documented rationale
-- [ ] Event schemas are versioned and shared
-```
+- [ ] Cross-component comms uses event bus where feasible (TIP-008)
+- [ ] Direct calls are exceptions with documented rationale
+- [ ] Event schemas versioned and shared
 
 **P10 — Runtime State Explainability Check:**
-```
-## Runtime State Explainability Check
 - [ ] State mutations have provenance records (TIP-009: ADTO)
 - [ ] State is inspectable without side effects
 - [ ] DTOs carry _provenance field where applicable
-```
 
 ### Step 4: Order Tasks by Context Dependency
 
-Analyze task dependencies and order them to minimize context switching:
-
-> **Tasks with overlapping context should be grouped to minimize reloading.**
+Group tasks sharing 50%+ of context files consecutively.
 
 **Grouping Rules:**
-1. Tasks sharing 50%+ of context files should be consecutive
-2. Tasks in the same component boundary should be grouped
-3. Tasks crossing multiple boundaries should be preceded by context refresh
-4. Tasks with state explainability requirements should be adjacent to their state tracking tasks
+1. Tasks sharing 50%+ context files should be consecutive
+2. Tasks in same component boundary should be grouped
+3. Tasks crossing multiple boundaries need context refresh before
+4. Tasks with state explainability adjacent to their state tracking tasks
 
 ### Step 5: Generate AIOA-Compliant Tasks
 
-Write each task using the AIOA task template.
-
-**Each task includes:**
-- AIOA context budget
-- All 10 AIOA principle verification checks
-- Semantic Integrity gates for boundary crossings
-- Implementation steps with AIOA annotations
-- AIOA compliance checklist for verification
-- Standard task details (acceptance criteria, test criteria)
+Write each task using the AIOA task template. Each includes: AIOA context budget, all 10 principle verification checks, Semantic Integrity gates, implementation steps with AIOA annotations, compliance checklist, acceptance/test criteria.
 
 ---
 
 ## Task Generation Rules
 
 ### Rule 1: Context Budget Must Be Accurate
-
-Every task must have a realistic context budget. If a task requires more than 8 context files, it must be split into smaller tasks.
-
-**Splitting Heuristic:**
-- **9+ files:** Split by architectural boundary
-- **6–8 files:** Consider splitting, document if not
-- **1–5 files:** Acceptable as single task
+Every task must have a realistic context budget. **Splitting:** 1-5 files acceptable; 6-8 consider splitting; 9+ split by architectural boundary.
 
 ### Rule 2: All 10 Principles Must Be Checked
+At minimum: P1 (always), P2 (always), P3 (if boundaries crossed).
 
-Every task SHALL include verification checks for all applicable AIOA principles. At minimum:
-- P1 (Local Reasoning) — always checked
-- P2 (Crystallization Radius) — always checked
-- P3 (Semantic Integrity) — checked if boundaries are crossed
+### Rule 3: Semantic Integrity Gates Mandatory
+Every task crossing a component boundary must include Semantic Integrity gates. Crossing detected when: modifying files in multiple components, reading data from another component, adding new interfaces, changing shared types.
 
-### Rule 3: Semantic Integrity Gates Are Mandatory
-
-Every task that crosses a component boundary must include Semantic Integrity gates.
-
-**Boundary crossing detected when:**
-- Task modifies files in multiple components
-- Task reads data from another component
-- Task adds a new interface between components
-- Task changes a shared type
-
-### Rule 4: No Deployment Coupling in Tasks
-
-Tasks must not encode deployment assumptions.
-
-**Flag for review if task mentions:**
-- Specific hosting environment
-- Network topology
-- Specific infrastructure products (unless delegated to infrastructure boundary)
+### Rule 4: No Deployment Coupling
+Tasks must not encode deployment assumptions. Flag if mentioning specific hosting, network topology, infrastructure products (unless delegated to infrastructure boundary).
 
 ### Rule 5: State Explainability Must Be Planned
-
-Every task that introduces or modifies stateful components must include runtime state explainability provisions (P10).
-
-**State explainability required when:**
-- Task creates new data structures that persist across requests
-- Task introduces mutation logic
-- Task creates new DTOs that cross boundaries
-- Task adds caching or stateful middleware
+Every stateful task needs P10 provisions. Required when: creating persistent data structures, introducing mutation, creating cross-boundary DTOs, adding caching/stateful middleware.
 
 ### Rule 6: Group Related Tasks
-
-Tasks within the same component should be sequential. Context retention reduces total context load.
+Tasks within same component should be sequential. Context retention reduces total context load.
 
 ---
 
 ## Validation
 
-### Pre-Output Checks
-
-- [ ] Every task has a context budget (files to read, files to modify)
+- [ ] Every task has context budget (files to read/modify)
 - [ ] Every task has P1 (Local Reasoning) assessment
 - [ ] Every task has P2 (Crystallization Radius) impact
-- [ ] Every task crossing a boundary has P3 (Semantic Integrity) gates
+- [ ] Every task crossing boundary has P3 (Semantic Integrity) gates
 - [ ] Every task has P4 (Boundaries Explicit) check
 - [ ] Every task with interfaces has P5 (Contracts Deterministic) check
 - [ ] Every task has P6 (Control-Flow Simplicity) check
 - [ ] Every task has P7 (Deployment Independence) check
 - [ ] Every task with abstractions has P8 (Extract Under Reuse) check
-- [ ] Every task with cross-component communication has P9 (Event Boundaries) check
+- [ ] Every task with cross-component comms has P9 (Event Boundaries) check
 - [ ] Every task with state has P10 (Runtime Explainability) check
-- [ ] Tasks are ordered to minimize context reloading
+- [ ] Tasks ordered to minimize context reloading
 
 ---
 
 ## Prompt Templates
 
 ### Task Decomposition Prompt
-
 ```
 Decompose [PLAN_STEP] into AIOA-annotated tasks.
-
-For each task, determine:
-1. Context budget (files to read, files to modify) — P2
+For each task determine:
+1. Context budget (files to read/modify) — P2
 2. Local Reasoning assessment — P1
-3. Boundaries crossed and Semantic Integrity requirements — P3, P4
+3. Boundaries crossed and Semantic Integrity — P3, P4
 4. Interface contracts and verifiability — P5
 5. Control flow complexity — P6
 6. Deployment independence — P7
@@ -320,22 +222,17 @@ For each task, determine:
 ```
 
 ### Context Grouping Prompt
-
 ```
-Group the following tasks by context overlap:
-[TASK_LIST]
-
-Tasks sharing 50%+ of their context files should be consecutive.
-Tasks in the same component should be adjacent.
-Tasks crossing shared boundaries should be ordered by dependency.
-Tasks with state dependencies should be ordered by state flow.
+Group tasks by context overlap: [TASK_LIST]
+Tasks sharing 50%+ context files should be consecutive.
+Tasks in same component should be adjacent.
+Tasks crossing shared boundaries ordered by dependency.
+Tasks with state dependencies ordered by state flow.
 ```
 
 ### Integrity Gate Prompt
-
 ```
-Define all AIOA principle gates for task [TASK_NAME].
-
+Define AIOA principle gates for task [TASK_NAME]:
 Boundaries crossed: [LIST]
 Data crossing each boundary: [LIST]
 Interfaces: [LIST]

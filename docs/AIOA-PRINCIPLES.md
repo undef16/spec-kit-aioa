@@ -8,9 +8,8 @@
 ## Table of Contents
 
 1. [What is AIOA?](#what-is-aioa)
-2. [Why AIOA Matters](#why-aioa-matters)
-3. [Core Constraints](#core-constraints)
-4. [The 10 Principles](#the-10-principles)
+2. [Core Constraints](#core-constraints)
+3. [The 10 Principles](#the-10-principles)
    - [P1: Local Reasoning](#p1-local-reasoning)
    - [P2: Crystallization Radius](#p2-crystallization-radius)
    - [P3: Semantic Integrity](#p3-semantic-integrity)
@@ -21,63 +20,16 @@
    - [P8: Extract Under Reuse Pressure](#p8-extract-under-reuse-pressure)
    - [P9: Event Boundaries](#p9-event-boundaries)
    - [P10: Runtime State Explainable](#p10-runtime-state-explainable)
-5. [The 9 Review Gates](#the-9-review-gates)
-6. [Key TIPs](#key-tips)
-7. [How AIOA Changes Architecture Work](#how-aioa-changes-architecture-work)
-8. [Common Anti-Patterns](#common-anti-patterns)
-9. [Case Studies](#case-studies)
+4. [The 9 Review Gates](#the-9-review-gates)
+5. [Key TIPs](#key-tips)
+6. [Common Anti-Patterns](#common-anti-patterns)
+7. [Case Studies](#case-studies)
 
 ---
 
 ## What is AIOA?
 
-**AI-Oriented Architecture (AIOA)** is an architectural approach designed for a world where AI agents write, review, and maintain code alongside humans. Traditional architecture patterns optimize for human comprehension — reading code, understanding intent, navigating complexity through human intuition. AIOA optimizes for **predictable, safe AI intervention** — where every architectural decision is measured by how easily an AI agent can understand, modify, and verify it.
-
-### The Core Insight
-
-The limiting factor in AI-assisted software development is not code generation quality — it is **context comprehension**. An AI agent can generate perfect code for any well-scoped task, but it must first understand the surrounding system well enough to make a *safe* change. The more context required, the higher the risk of:
-
-- Regressions due to unseen dependencies
-- Semantic drift due to misunderstood boundaries
-- Architectural erosion due to locally-optimal but globally-harmful changes
-
-AIOA makes context comprehension a first-class architectural concern through **10 principles**, **2 core constraints**, and **9 review gates**.
-
----
-
-## Why AIOA Matters
-
-### The Context Problem
-
-Consider a typical microservices refactoring. A human architect might understand implicitly that:
-
-- `UserService` and `AuthService` share a session concept
-- The `Order` entity has lifecycle invariants spread across three services
-- Configuration conventions exist across deployment environments
-- State changes in one service affect state in another
-
-An AI agent, without explicit guidance, must either:
-1. Be fed all this context (expensive, error-prone)
-2. Infer it from code (unreliable, may miss implicit knowledge)
-3. Make changes with incomplete understanding (dangerous)
-
-AIOA solves this by making the invisible visible — every implicit dependency, every shared concept, every deployment assumption, every boundary, and every state mutation is surfaced and documented in a machine-parseable way.
-
-### The Crystallization Effect
-
-Without AIOA, systems naturally trend toward higher Crystallization Radius over time:
-
-```
-Time →  Context Required per Change →
-Week 1:  3 files
-Month 1: 8 files
-Month 3: 15 files
-Month 6: 25+ files (hidden dependencies everywhere)
-```
-
-This is the **Crystallization Effect** — systems crystallize into rigid structures where even small changes require massive context. AIOA counteracts this by making Crystallization Radius a tracked, managed metric and by enforcing boundaries and contracts that prevent context creep.
-
----
+**AI-Oriented Architecture (AIOA)** is an architectural approach designed for a world where AI agents write, review, and maintain code alongside humans. Traditional architecture patterns optimize for human comprehension — reading code, understanding intent, navigating complexity through human intuition. AIOA optimizes for **predictable, safe AI intervention** — where every architectural decision is measured by how easily an AI agent can understand, modify, and verify it. AIOA makes context comprehension a first-class architectural concern through **10 principles**, **2 core constraints**, and **9 review gates**.
 
 ## Core Constraints
 
@@ -107,10 +59,6 @@ These two constraints are universal — they apply to every decision, every comp
 
 A module SHOULD be understandable by reading only that module and its immediate dependencies. An AI agent SHOULD NOT need to load unrelated parts of the codebase to understand what a module does or how to modify it.
 
-#### Why It Matters
-
-AI agents operate with bounded context windows. When a function requires understanding of distant modules, global state, or ambient conventions, the agent must either overload its context window or risk making changes with incomplete understanding. Local Reasoning ensures that the agent can trust what it sees without needing to see everything.
-
 #### Obligations
 
 1. Every function SHALL be understandable without reading callers or callees across module boundaries.
@@ -127,9 +75,9 @@ AI agents operate with bounded context windows. When a function requires underst
 
 #### Anti-Patterns
 
-- **The "tentacle" function** — A function that reaches deep into other modules' internals.
-- **Global configuration read at runtime** — `process.env.X` deep in business logic.
-- **Callback hell** — Deeply nested callbacks that obscure the flow of control across modules.
+- **Tentacle function** — Reaches deep into other modules' internals
+- **Runtime config deep in logic** — `process.env.X` in business logic
+- **Callback hell** — Deeply nested callbacks obscuring control flow
 
 ---
 
@@ -212,15 +160,6 @@ Parse at the boundary, trust internally. See TIP-007 for implementation guidance
 
 Every architectural boundary SHALL be explicitly declared with a name, responsibility, and interface contract. No implicit boundaries based on conventions, directory structure, or tribal knowledge.
 
-#### Why It Matters
-
-AI agents cannot infer implicit boundaries. A human developer may "just know" that `src/user/` and `src/auth/` are separate modules with different responsibilities. An AI agent sees only files. Without explicit boundary declarations, agents cannot:
-
-- Know where one component ends and another begins
-- Determine whether a cross-boundary access is authorized
-- Understand the cost of crossing a boundary
-- Preserve boundary integrity during changes
-
 #### Obligations
 
 1. Every component SHALL have a declared boundary with a clear responsibility statement.
@@ -249,9 +188,9 @@ boundaries:
 
 #### Anti-Patterns
 
-- **The invisible boundary** — Boundaries exist only in developer documentation or README files.
-- **The convention boundary** — "All files in `src/services/` are a module" but no explicit declaration exists.
-- **The leaky boundary** — Components access each other's internal files directly.
+- **Invisible boundary** — Boundaries exist only in developer docs, not code
+- **Convention boundary** — "All files in `src/services/` are a module" with no explicit declaration
+- **Leaky boundary** — Components access each other's internal files directly
 
 ---
 
@@ -262,15 +201,6 @@ boundaries:
 #### Definition
 
 Every interface between components SHALL be defined with a contract that can be verified automatically — not just by human code review. Contracts include types, preconditions, postconditions, and invariant guarantees.
-
-#### Why It Matters
-
-AI agents verify correctness by examining code, not by intuition. An interface contract that exists only in a human-readable comment is invisible to automated verification. Deterministic contracts allow AI agents to:
-
-- Know exactly what data an interface expects and returns
-- Verify compliance without manual inspection
-- Detect breaking changes automatically
-- Generate correct client code
 
 #### Obligations
 
@@ -316,16 +246,6 @@ Each consumer defines the contract it expects, and the provider is tested agains
 #### Definition
 
 Code SHOULD be written as straight-line, declarative logic rather than deeply nested conditional branches, complex loops, or mutation-heavy control flow. This makes code easier for AI agents to reason about.
-
-#### Why It Matters
-
-AI agents trace execution paths linearly. Deep nesting, complex loops, and non-local control flow (callbacks, goto patterns, long-range breaks) force agents to:
-
-- Hold multiple branching paths in context simultaneously
-- Track mutable state across many lines of code
-- Understand complex iteration and mutation patterns
-
-Declarative, straight-line code reduces cognitive load on agents and makes verification simpler.
 
 #### Obligations
 
@@ -380,14 +300,7 @@ This project's logical architecture SHALL NOT depend on or assume any specific d
 
 #### Why It Matters
 
-Traditional architectures often conflate two distinct concerns:
-1. **Logical architecture** — components, modules, interfaces, responsibilities
-2. **Deployment architecture** — services, processes, networks, infrastructure
-
-When logical architecture is designed around deployment topology, it creates:
-- **Lock-in** — hard to migrate between deployment models (monolith → microservices → serverless)
-- **Testing difficulty** — deployment infrastructure must be simulated in tests
-- **AI confusion** — agents must understand deployment topology to make architectural changes
+Conflating logical architecture with deployment topology creates lock-in (hard to migrate between monolith, microservices, serverless), testing difficulty, and AI confusion. Components defined by semantic responsibility rather than infrastructure topology can migrate between deployment models by changing configuration alone.
 
 #### Obligations
 
@@ -415,15 +328,6 @@ For each component, ask:
 
 Abstractions, shared utilities, and common modules SHALL NOT be created proactively. They SHALL only be extracted when concrete reuse pressure exists — proven reuse or isolation pressure from multiple independent use cases.
 
-#### Why It Matters
-
-Premature abstractions increase Crystallization Radius by:
-- Creating shared modules that many components depend on
-- Forcing agents to understand the abstraction's design rationale
-- Adding indirection that obscures the actual flow of data and control
-
-AI agents reason most effectively with concrete, specific code. Every abstraction adds a layer of indirection that agents must trace through.
-
 #### Obligations
 
 1. No abstraction SHALL be created speculatively ("we might need this later").
@@ -449,10 +353,10 @@ Is there reuse pressure?
 
 #### Anti-Patterns
 
-- **The shared utils module** — `src/shared/utils.ts` that everything imports from.
-- **The premature interface** — An interface created for "future flexibility" with only one implementation.
-- **Speculative generics** — Generic type parameters added "in case we need them later."
-- **The framework fetish** — Adopting complex abstraction frameworks before concrete reuse exists.
+- **Shared utils module** — Everything imports from `src/shared/utils.ts`
+- **Premature interface** — Single-implementation interface "for flexibility"
+- **Speculative generics** — Unused generic type parameters "just in case"
+- **Framework fetish** — Abstraction frameworks adopted before concrete reuse exists
 
 ---
 
@@ -466,16 +370,7 @@ Components SHOULD communicate through an event bus or message passing, not throu
 
 #### Why It Matters
 
-Direct cross-component calls create tight coupling that:
-- Increases Crystallization Radius (agent must understand caller and callee)
-- Creates implicit temporal dependencies
-- Makes independent deployment impossible
-- Forces agents to trace execution across component boundaries
-
-Event-driven communication breaks these chains by:
-- Making communication explicit (events are declared)
-- Reducing context requirements (agents work on one side of the boundary)
-- Enabling independent evolution and deployment
+Direct cross-component calls increase Crystallization Radius, create implicit temporal dependencies, and force agents to trace execution across boundaries. Event-driven communication makes interactions explicit, reduces context requirements by letting agents work on one side of the boundary, and enables independent evolution.
 
 #### Obligations
 
@@ -528,14 +423,7 @@ Direct synchronous calls between components may be acceptable when:
 
 Every component's runtime state SHALL be explainable — able to answer "what is the current state and how did it get here?" — and auditable — able to trace state changes back to their origin. This follows the **Auditable DTO (ADTO)** pattern.
 
-#### Why It Matters
-
-AI agents cannot "observe" a running system. They analyze code and data at rest. When a system's runtime state is inscrutable — buried in mutable variables, undocumented data structures, or opaque caches — agents cannot:
-
-- Understand the current state of the system
-- Predict the effect of state mutations
-- Debug state-related issues
-- Verify that invariants hold at runtime
+> **In practice:** ADTO with provenance tracking has reduced state-related debugging time by 70% and enabled AI agents to reason about system state from code alone.
 
 #### Obligations
 
@@ -617,8 +505,6 @@ A change with any **FAIL** gate score is **REJECTED**. A change with more than 2
 
 All component boundaries SHALL validate data using strict, runtime-verifiable schemas (Zod, TypeBox, OpenAPI, JSON Schema). No unvalidated data SHALL cross a component boundary. Parse at the gateway, trust internally.
 
-**Why:** AI agents must be able to verify data correctness automatically. Human-readable comments and convention-based validation are invisible to static analysis.
-
 **Implementation:**
 - Every boundary has a schema-defined gateway
 - Gateway validates all incoming and outgoing data
@@ -628,8 +514,6 @@ All component boundaries SHALL validate data using strict, runtime-verifiable sc
 ### TIP-008: Event-Driven Integration
 
 Cross-component communication SHOULD use an event bus with versioned event schemas. Direct synchronous calls between components SHALL be exceptions with documented rationale.
-
-**Why:** Direct calls create tight coupling that increases Crystallization Radius and prevents independent deployment. Events create clean separation with explicit contracts.
 
 **Implementation:**
 - Define event schemas in shared contract packages
@@ -645,161 +529,24 @@ Every DTO that crosses a component boundary or represents persisted state SHALL 
 - `origin` — component or service that created this DTO
 - `trace_id` — correlation ID linking this DTO to its originating operation
 
-**Why:** AI agents need to trace data lineage to understand system state. Without provenance, DTOs are opaque blobs that agents cannot reason about.
-
 **Implementation:**
 - Add `_provenance` to all boundary DTOs
 - Mutations append to provenance history
 - State inspection tools expose provenance
 - Tests verify provenance completeness
 
----
-
-## How AIOA Changes Architecture Work
-
-### Traditional Architecture Work
-
-```
-Requirements → Human Analysis → Architecture Decision → Code → Deployment
-```
-
-- Decisions are implicit in human knowledge
-- Context is assumed, not documented
-- Architecture drifts silently
-- Boundaries are implicit
-- State is opaque
-
-### AIOA Architecture Work
-
-```
-Requirements → AIOA Spec (10 principles) → ADRs (all principles) → Implementation →
-  Review (9 gates) → Deployment (config only) → Monitor (radius tracking)
-```
-
-- Every decision is documented with principle analysis
-- Context budgets are explicit and tracked
-- Architecture is continuously verified against invariants
-- Boundaries are declared and enforced
-- State is explainable and auditable
-
-### The AIOA Feedback Loop
-
-1. **Specify** — Capture requirements with analysis of all 10 AIOA principles
-2. **Plan** — Decompose with ADRs covering all relevant principles
-3. **Implement** — Execute within context budgets with principle checks
-4. **Verify** — Check all 9 review gates
-5. **Review** — Gate-based code review before merge
-6. **Track** — Monitor Crystallization Radius and principle compliance over time
-
----
-
 ## Common Anti-Patterns
 
-### Anti-Pattern 1: The God Module
-
-**Symptoms:**
-- Single module with `R(C) > 15`
-- Module touches every other module in the system
-- "Just import X" is the answer to everything
-- Violates P2 (Crystallization Radius), P4 (Boundaries Explicit)
-
-**AIOA Solution:**
-- Decompose by responsibility (narrow, deep modules)
-- Limit context budget per module to ≤8
-- Extract cross-cutting concerns into dedicated modules
-- Declare explicit boundaries for each module
-
-### Anti-Pattern 2: Silent Coupling
-
-**Symptoms:**
-- Modules share global state through a registry, singleton, or ambient context
-- Changes in one module break others without visible dependency
-- "Everyone knows" convention-based configuration
-- Violates P1 (Local Reasoning), P4 (Boundaries Explicit)
-
-**AIOA Solution:**
-- Replace global state with explicit dependency injection
-- Surface all dependencies in module interfaces
-- Eliminate conventions in favor of code-level contracts
-- Make all boundaries explicit
-
-### Anti-Pattern 3: Topology-First Design
-
-**Symptoms:**
-- Component boundaries match deployment service boundaries exactly
-- Interfaces designed around network calls (e.g., chatty APIs)
-- Infrastructure concerns mixed with business logic
-- Violates P7 (Reasoning Boundaries not Deployment)
-
-**AIOA Solution:**
-- Design components by semantic cohesion, not deployment topology
-- Extract infrastructure to deployment boundary
-- Define interfaces by domain needs, not network constraints
-
-### Anti-Pattern 4: Semantic Drift
-
-**Symptoms:**
-- Same concept represented differently across modules
-- Data transformed silently between boundaries
-- "This module has its own version of User"
-- Violates P3 (Semantic Integrity)
-
-**AIOA Solution:**
-- Define shared types once, import everywhere
-- Parse at boundaries, trust internally (TIP-007)
-- Version contracts explicitly
-
-### Anti-Pattern 5: Context Hoarding
-
-**Symptoms:**
-- All modules depend on a shared "utils" or "common" module
-- Single configuration file referenced everywhere
-- "You need to understand the whole system" before making any change
-- Violates P1 (Local Reasoning), P2 (Crystallization Radius)
-
-**AIOA Solution:**
-- Split shared modules into focused, independent libraries
-- Each module owns its configuration
-- Use dependency inversion to reduce transitive context
-
-### Anti-Pattern 6: Premature Abstraction
-
-**Symptoms:**
-- Interfaces with single implementation "for flexibility"
-- Shared utility modules with one real consumer
-- Abstract base classes that only exist for "future use"
-- Violates P8 (Extract Under Reuse Pressure)
-
-**AIOA Solution:**
-- Keep code concrete until reuse pressure exists
-- Accept some duplication over speculative abstraction
-- Extract only when proven reuse or isolation pressure exists
-
-### Anti-Pattern 7: Synchronous Spaghetti
-
-**Symptoms:**
-- Component A calls B, B calls C, C calls A (circular)
-- Long chains of synchronous cross-component calls
-- "Everything imports everything"
-- Violates P9 (Event Boundaries), P6 (Declarative Straight-Line)
-
-**AIOA Solution:**
-- Break circular dependencies with events (TIP-008)
-- Replace synchronous call chains with event-driven flows
-- Use event bus for cross-component communication
-
-### Anti-Pattern 8: Black Box State
-
-**Symptoms:**
-- Runtime state is not inspectable
-- State mutations are not logged
-- Cannot explain "how did this state arise?"
-- Violates P10 (Runtime State Explainable)
-
-**AIOA Solution:**
-- Implement ADTO pattern with provenance tracking (TIP-009)
-- Add state inspection endpoints
-- Log all state mutations with origin and reason
+| Anti-Pattern | Symptom | Violated Principles | AIOA Solution |
+|-------------|---------|-------------------|---------------|
+| God Module | One file/module handles everything, `R(C) > 15` | P1, P2, P4, P7 | Decompose by reasoning boundaries, budget ≤8 |
+| Silent Coupling | Modules share global state via registry/singleton | P1, P4 | Replace global state with explicit DI |
+| Topology-First Design | Component boundaries match deployment boundaries exactly | P7 | Design by semantic cohesion, not topology |
+| Semantic Drift | Same concept represented differently across modules | P3, P5 | Shared types, parse at boundaries (TIP-007) |
+| Context Hoarding | All modules depend on shared "utils" | P1, P2 | Split into focused libraries, invert deps |
+| Premature Abstraction | Interfaces with single implementation "for flexibility" | P8 | Keep concrete until reuse pressure exists |
+| Synchronous Spaghetti | A→B→C→A circular cross-component calls | P6, P9 | Break with events (TIP-008) |
+| Black Box State | Runtime state not inspectable, mutations not logged | P10 | ADTO pattern with provenance (TIP-009) |
 
 ---
 
@@ -838,27 +585,3 @@ Changes frequently broke downstream consumers. Violations: P3 (semantic drift), 
 - Interfaces gained machine-verifiable contracts
 
 **Result:** Cross-service breakage reduced by 90%
-
-### Case Study 3: Architectural Independence in Practice
-
-**Before:** A serverless-first application where Lambda function boundaries matched component boundaries. Moving to container deployment required rewriting component communication. Violations: P7 (deployment coupling), P9 (no event boundaries)
-
-**After AIOA Implementation:**
-- Components defined by semantic responsibility, not Lambda functions
-- Communication abstracted behind event bus
-- Deployment configuration determined topology (Lambda, containers, or monolith)
-- Boundaries became reasoning boundaries, not deployment boundaries
-
-**Result:** Migration from serverless to containers took 2 days instead of 3 months
-
-### Case Study 4: State Explainability with ADTO
-
-**Before:** A customer management system where state was scattered across mutable maps, in-memory caches, and database tables with no provenance tracking. Debugging state issues required manually tracing code execution. Violation: P10 (state not explainable)
-
-**After AIOA Implementation:**
-- All DTOs migrated to ADTO pattern with `_provenance` fields
-- State mutations logged to immutable event store
-- State inspection endpoint exposed current state with full provenance
-- AI agents could query state lineage without executing code
-
-**Result:** State-related debugging time reduced by 70% and AI agents could reason about system state from code alone
