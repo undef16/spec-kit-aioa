@@ -36,13 +36,13 @@
 ## Installation
 
 ```bash
-specify preset add https://github.com/undef16/spec-kit-aioa/archive/refs/heads/main.zip
+specify preset add --from https://github.com/undef16/spec-kit-aioa/archive/refs/heads/main.zip
 ```
 
 ### From local folder (development)
 
 ```bash
-specify preset add --dev "D:\Work\spec-kit-aioa\spec-kit-aioa-preset"
+specify preset add --dev D:\Work\spec-kit-aioa
 ```
 
 ### Prerequisites
@@ -50,29 +50,16 @@ specify preset add --dev "D:\Work\spec-kit-aioa\spec-kit-aioa-preset"
 - **Spec Kit** version `>=0.8.0`
 - A project already initialized with `specify init`
 
----
-
-## Publishing to GitHub
-
-Spec Kit provides a built-in command to publish your preset as a GitHub release:
+### Verify installation
 
 ```bash
-specify preset publish
+# Verify installation
+specify preset info aioa
+
+# List installed presets
+specify preset list
 ```
-
-**Steps:**
-
-1. **Ensure `preset.yml` is valid** — Run `specify preset validate` to check for errors.
-2. **Run `specify preset publish`** — This creates a GitHub release with the preset packaged as a ZIP archive.
-3. **Done** — Users can now install via the release URL.
-
-### Manual alternative
-
-If you prefer not to use the built-in command, create a GitHub release manually and upload the ZIP archive of the preset directory.
-
 ---
-
-
 
 ## How It Modifies the SDD Workflow
 
