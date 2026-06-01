@@ -4,7 +4,7 @@ extension:
   id: "aioa-enforcement"
   name: "AIOA Compliance Enforcement"
   version: "1.0.0"
-  description: "Mandatory pre-implementation AIOA compliance validation hook that enforces all 9 review gates before any code is written"
+  description: "AIOA enforcement extension with mandatory hooks for constitution, specify, and implement phases — enforces TIP-002-TIP-008 compliance across all phases"
   author: "undef16"
   repository: "https://github.com/undef16/spec-kit-aioa"
   license: "MIT"
@@ -18,12 +18,40 @@ provides:
       file: "commands/speckit.aioa-enforcement.validate.md"
       description: "Validate AIOA compliance before implementation (mandatory hook)"
       aliases: ["speckit.aioa-enforcement.check"]
-    - name: "speckit.aioa-enforcement.review"
-      file: "commands/speckit.aioa-enforcement.review.md"
-      description: "Run AIOA code review — checks all 9 gates (G1-G9) and TIP compliance on implemented code"
 
 hooks:
+  after_constitution:
+    command: "speckit.aioa-enforcement.validate"
+    optional: false
+    prompt: "Validating constitution against AIOA principles..."
+    args:
+      scope: "constitution"
+  after_specify:
+    command: "speckit.aioa-enforcement.validate"
+    optional: false
+    prompt: "Running AIOA principle validation before specification..."
+    args:
+      scope: "specify"
+  after_plan:
+    command: "speckit.aioa-enforcement.validate"
+    optional: false
+    prompt: "Running AIOA principle validation after plan..."
+    args:
+      scope: "plan"
+  after_tasks:
+    command: "speckit.aioa-enforcement.validate"
+    optional: false
+    prompt: "Running AIOA principle validation after tasks..."
+    args:
+      scope: "tasks"
   before_implement:
     command: "speckit.aioa-enforcement.validate"
     optional: false
     prompt: "Running mandatory AIOA compliance validation before implementation..."
+
+  after_implement:
+    command: "speckit.aioa-enforcement.validate"
+    optional: false
+    prompt: "Running AIOA principle validation after implement..."
+    args:
+      scope: "implement"

@@ -1,13 +1,13 @@
 # AI-Oriented Architecture (AIOA) — Spec Kit Preset
 
-> **Makes AIOA principles executable by AI agents.**  
-> Every architectural decision is guided by the 10 AIOA principles, 2 core constraints, and 9 review gates.
+> **Makes your codebase safe for AI coding assistants.**  
+> Every architectural decision is guided by Technical Implementation Patterns (TIP-002-TIP-008).
 
 ---
 
 ## What is AIOA?
 
-**AI-Oriented Architecture (AIOA)** is an architectural approach designed for a world where AI agents write, review, and maintain code alongside humans. Traditional architecture patterns optimize for human comprehension; AIOA optimizes for **predictable, safe AI intervention**.
+**AI-Oriented Architecture (AIOA)** is an architectural approach designed for a world where AI coding assistants (Claude Code, Copilot, Cursor) write, review, and maintain code alongside humans. Traditional architecture patterns optimize for human comprehension; AIOA optimizes for **predictable, safe AI intervention**.
 
 ### Core Constraints
 
@@ -16,20 +16,17 @@
 | **C1: Minimize Crystallization Radius** | Minimize the context an AI agent must consume before making a safe change |
 | **C2: Preserve Semantic Integrity** | Preserve meaning across all architectural boundaries |
 
-### The 10 Principles
+### The 7 Technical Implementation Patterns (TIPs)
 
-| # | Principle | Core Question |
-|---|-----------|--------------|
-| P1 | **Local Reasoning** | Can code be understood from local context alone? |
-| P2 | **Crystallization Radius** | How much context must an agent consume before making a safe change? |
-| P3 | **Semantic Integrity** | Is meaning preserved across architectural boundaries? |
-| P4 | **Boundaries Explicit** | Are all component boundaries clearly declared? |
-| P5 | **Contracts Deterministic** | Are interfaces machine-verifiable? |
-| P6 | **Declarative Straight-Line** | Is code linear and declarative over complex control flow? |
-| P7 | **Reasoning Boundaries not Deployment** | Is logical architecture orthogonal to deployment topology? |
-| P8 | **Extract Under Reuse Pressure** | Are abstractions deferred until reuse pressure exists? |
-| P9 | **Event Boundaries** | Is cross-component communication event-driven? |
-| P10 | **Runtime State Explainable** | Can runtime state be explained and audited? |
+| TIP | Pattern | Concern |
+|-----|---------|---------|
+| TIP-002 | **Semantic Collision** | Every domain concept has a distinct type — no primitive obsession |
+| TIP-003 | **Repository Search Bottleneck** | No module exceeds 7 files — responsibility is distributed |
+| TIP-004 | **Code Crystallization** | No dead wrapper chains — call directly if no value is added |
+| TIP-005 | **Quantum Spectrum** | Components are named by level: Pico, Nano, Micro — never "Service" |
+| TIP-006 | **Declarative Straight-Line** | Execution mechanics (retry/fallback/timeout) are extracted into named policies |
+| TIP-007 | **Auditable Data Transfer Objects (ADTO)** | All boundary data is typed + provenance-tracked |
+| TIP-008 | **Event-Driven Integration** | All cross-component communication goes through an event bus (even in-memory) |
 
 ---
 
@@ -78,8 +75,8 @@ The extension adds a mandatory `before_implement` hook that automatically runs A
 What it does:
 - Loads all project artifacts (spec, plan, tasks, constitution)
 - Scans all source code
-- Validates all 9 AIOA review gates (G1–G9) with deterministic pass/fail criteria
-- **Blocks implementation** if any gate fails
+- Validates all .md files against TIP-002-TIP-008 with deterministic pass/fail criteria
+- **Blocks implementation** if any TIP fails
 - Generates `aioa-validation-report.md` with full violation details
 
 ---
@@ -89,29 +86,19 @@ What it does:
 The AIOA preset overlays architectural guardrails on top of the standard Spec-Driven Development workflow:
 
 ### 1. Specification (`/speckit.specify`)
-AIOA adds **full principle impact analysis** to every specification. Before a spec is approved, the agent completes assessments for all 10 AIOA principles (P1–P10), ensuring compliance with both core constraints (C1, C2).
+AIOA integrates TIP checks directly into the specification process. Each architecture layer is described using applicable TIPs — value objects (TIP-002), context budget (TIP-003), dead wrapper elimination (TIP-004), component naming (TIP-005), execution mechanics (TIP-006), ADTO contracts (TIP-007), and event bus communication (TIP-008). No separate compliance section — TIPs ARE the architecture.
 
 ### 2. Planning (`/speckit.plan`)
-Every plan includes **Architecture Decision Records (ADRs)** with explicit analysis of all relevant principles. Plans surface hidden coupling, surface area expansion, and boundary violations before any code is written.
+Every plan includes **Architecture Decision Records (ADRs)** with AIOA TIPs applied directly to each decision — typed contracts (TIP-007), event-driven integration (TIP-008), Pico/Nano/Micro levels (TIP-005), max 7 files per component (TIP-003), no dead abstraction (TIP-004), extracted mechanics (TIP-006), value objects (TIP-002).
 
 ### 3. Task Generation (`/speckit.tasks`)
 Each task is annotated with:
-- Context budget (maximum files/scope the agent needs to load)
-- All applicable AIOA principle checks
-- Integrity gates at every boundary crossing
-- Explainability requirements for runtime state
-### 4. Code Review (`/speckit.aioa-enforcement.review`)
+- Context budget (maximum files the agent needs to load)
+- AIOA TIPs applicable to this task
+- Verification criteria
+### 4. AIOA Validation (`/speckit.aioa-enforcement.validate`)
 
-The AIOA code review template enforces all **9 review gates** (note: `/speckit.aioa-enforcement.review` is AIOA-specific — it is not part of the core Spec Kit):
-1. Crystallization Radius — context budget check
-2. Semantic Integrity — shared types and boundary contracts
-3. Local Reasoning — can code be understood without external context?
-4. Boundary Explicitness — are all boundaries declared?
-5. Contract Determinism — are interfaces machine-verifiable?
-6. Control-Flow Simplicity — is code straight-line and declarative?
-7. Decomposition Quality — appropriate granularity?
-8. Integration Locality — are integrations local and explicit?
-9. Runtime Explainability — can runtime state be explained?
+Mandatory pre-implementation check. Runs automatically via `before_implement` hook (cannot be skipped). Validates all AIOA TIPs and generates `aioa-validation-report.md`.
 
 ---
 
@@ -123,7 +110,7 @@ The AIOA code review template enforces all **9 review gates** (note: `/speckit.a
 
 **Measure it:**
 - **Low** (👍 ideal): 1–3 files, no cross-module understanding needed
-- **Medium** (⚠️ caution): 4–8 files, some module interdependence
+- **Medium** (⚠️ caution): 4–7 files, some module interdependence
 - **High** (🚨 toxic): 9+ files, cross-cutting concerns, implicit dependencies
 
 **Minimize it:**
@@ -170,35 +157,34 @@ These commands are typed inside an AI coding assistant (GitHub Copilot, Claude C
 
 | Command | Description |
 |---------|-------------|
-| `/speckit.constitution` | Create or update project constitution with AIOA principles |
-| `/speckit.specify` | Define feature requirements with full AIOA principle analysis |
+| `/speckit.constitution` | Create or update project constitution with AIOA TIPs |
+| `/speckit.specify` | Define feature requirements with full AIOA TIP analysis |
 | `/speckit.clarify` | Interactive Q&A to fix under-specification |
-| `/speckit.plan` | Generate an implementation plan with ADRs and principle checks |
+| `/speckit.plan` | Generate an implementation plan with ADRs and TIP checks |
 | `/speckit.tasks` | Decompose tasks with AIOA annotations and context budgets |
 | `/speckit.analyze` | Cross-artifact consistency check |
 | `/speckit.implement` | Execute implementation tasks |
 | `/speckit.checklist` | Generate quality checklists |
-| `/speckit.aioa-enforcement.review` | Review code against all 9 AIOA review gates |
 | `/speckit.taskstoissues` | Convert tasks to GitHub issues |
 | `/speckit.aioa-enforcement.validate` | Pre-implementation AIOA compliance validation (mandatory hook, requires extension) |
 
-### ⚠️ Important: Mentioning principles in `/speckit.constitution`
+### ⚠️ Important: Mentioning TIPs in `/speckit.constitution`
 
-When running `/speckit.constitution`, you **must** mention the principles you want in your prompt. The agent needs explicit instruction to include them.
+When running `/speckit.constitution`, you **must** mention the TIPs you want in your prompt. The agent needs explicit instruction to include them.
 
 **Correct:**
 ```
 /speckit.constitution
-AIOA project. Follow AI-Oriented Architecture principles. Also use OOP, DRY, KISS.
+AIOA project. Follow AIOA Technical Implementation Patterns (TIP-002-TIP-008). Also use OOP, DRY, KISS.
 ```
 
-**Wrong (principles will be missing):**
+**Wrong (TIPs will be missing):**
 ```
 /speckit.constitution
 My project description here...
 ```
 
-The AIOA preset template hardcodes the 10 AIOA principles, but the agent will only fill them in if you explicitly ask. Include any additional principles (OOP, DRY, KISS, SOLID, TDD, etc.) in the same prompt.
+The AIOA preset template hardcodes the 7 AIOA TIPs, but the agent will only fill them in if you explicitly ask. Include any additional principles (OOP, DRY, KISS, SOLID, TDD, etc.) in the same prompt.
 
 ### Create a new specification with AIOA compliance
 
@@ -207,17 +193,14 @@ The AIOA preset template hardcodes the 10 AIOA principles, but the agent will on
 Add user authentication with email+password, JWT tokens, works in monolith and microservices.
 ```
 
-The AIOA preset will prompt for all 10 principles:
-- Local Reasoning assessment
-- Crystallization Radius of authentication feature
-- Semantic Integrity of user identity across modules
-- Boundaries Explicit map
-- Contracts Deterministic check
-- Control-Flow Complexity check
-- Reasoning Boundaries vs Deployment check
-- Extract Under Reuse Pressure assessment
-- Event Boundaries plan
-- Runtime State Explainability plan
+The AIOA preset will guide architecture through TIPs:
+- **TIP-002: Semantic Collision** — distinct Value Objects for Email, PasswordHash, JwtToken
+- **TIP-003: Repository Search Bottleneck** — max 7 files per component, split auth into focused files
+- **TIP-004: Code Crystallization** — no wrapper layers, call auth services directly
+- **TIP-005: Quantum Spectrum** — Pico actors for hashing, Nano actors for session, Micro actors for auth service
+- **TIP-006: Declarative Straight-Line** — extract retry/rate-limit into AuthPolicy
+- **TIP-007: ADTO** — typed schemas for login request/response, provenance for password changes
+- **TIP-008: Event-Driven Integration** — UserLoggedIn event on event bus, even in-process
 
 ### Generate a plan with architecture decisions
 
@@ -226,27 +209,24 @@ The AIOA preset will prompt for all 10 principles:
 ```
 
 Each plan step includes:
-- ADRs with all applicable AIOA principle analysis
+- ADRs with AIOA TIPs applied to each decision
 - Component boundary map
-- Semantic Integrity checkpoints
-- Runtime state explainability requirements
+- Context budget per step
 
-### Review code against AIOA principles
+### Validate code against AIOA TIPs
 
 ```
-/speckit.aioa-enforcement.review
+/speckit.aioa-enforcement.validate
 ```
 
-The review template checks all 9 review gates:
-- Crystallization Radius regression
-- Semantic Integrity preservation
-- Local Reasoning quality
-- Boundary Explicitness
-- Contract Determinism
-- Control-Flow Simplicity
-- Decomposition Quality
-- Integration Locality
-- Runtime Explainability
+Validates against all AIOA TIPs:
+- TIP-002: Semantic Collision — distinct types, no primitive obsession
+- TIP-003: Repository Search Bottleneck — max 7 files, distributed responsibility
+- TIP-004: Code Crystallization — no dead wrapper chains
+- TIP-005: Quantum Spectrum — Pico/Nano/Micro level naming
+- TIP-006: Declarative Straight-Line — extracted execution mechanics
+- TIP-007: ADTO — typed + auditable boundary data
+- TIP-008: Event-Driven Integration — event bus for cross-component communication
 
 ---
 
@@ -259,21 +239,16 @@ spec-kit-aioa-preset/
 ├── LICENSE                             # MIT License
 ├── CHANGELOG.md                        # Version history
 ├── templates/                          # AIOA additions (appended to core templates)
-│   ├── constitution-template-aioa.md   # AIOA principles additions
-│   ├── spec-template-aioa.md           # Spec AIOA compliance additions
-│   ├── plan-template-aioa.md           # Plan ADR and principle checks
-│   ├── tasks-template-aioa.md          # Tasks context budget and gates
-│   └── code-review-template-aioa.md    # Code review AIOA gates
+│   ├── constitution-template-aioa.md   # AIOA TIP wrap (TIP-002-TIP-008)
+│   ├── spec-template-aioa.md           # AIOA TIP wrap for specification
+│   ├── plan-template-aioa.md           # AIOA TIP wrap for planning ADRs
+│   ├── tasks-template-aioa.md          # AIOA TIP wrap for task decomposition
 ├── commands/                           # Command overrides
-│   ├── speckit.specify.md              # Enhanced specify with TIP-004/005 analysis
-│   ├── speckit.plan.md                 # Plan with TIP-008 event analysis
-│   └── speckit.tasks.md                # Tasks with TIP-009 ADTO pattern
+│   ├── speckit.specify.md              # Specify command with AIOA TIP guidance
+│   ├── speckit.plan.md                 # Plan command with AIOA TIP guidance
+│   └── speckit.tasks.md                # Tasks command with AIOA TIP guidance
 └── docs/                               # AIOA reference documentation
-    ├── AIOA-PRINCIPLES.md              # Full AIOA principles reference
-    ├── CRYSTALLIZATION-RADIUS.md       # Crystallization Radius guide
-    ├── SEMANTIC-INTEGRITY.md           # Semantic Integrity guide
-    ├── JSON-SCHEMA.md                  # Template JSON schemas (P5/TIP-007)
-    └── ADTO-EXAMPLE.md                 # ADTO implementation with provenance (P10/TIP-009)
+    └── AIOA.md                          # Technical Implementation Patterns — single source of truth for TIP-002-TIP-008
 ```
 
 ### Extension Structure
@@ -284,8 +259,8 @@ The AIOA Enforcement Extension adds:
 aioa-enforcement/
 ├── extension.yml                       # Extension manifest with mandatory before_implement hook
 └── commands/
-    ├── speckit.aioa-enforcement.validate.md        # AIOA compliance validation command (G1-G9)
-    └── speckit.aioa-enforcement.review.md          # AIOA code review command (G1-G9 + TIP compliance)
+    ├── speckit.aioa-enforcement.validate.md        # AIOA TIP validation command (TIP-002-TIP-008)
+
 ```
 
 Install alongside the preset for comprehensive AIOA enforcement.

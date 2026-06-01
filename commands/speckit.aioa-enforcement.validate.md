@@ -1,158 +1,124 @@
 ---
-description: "Mandatory AIOA compliance validation — enforces all 9 review gates before implementation"
-scripts:
-  - aioa validate
+description: "Mandatory AIOA validation — checks all .md files against TIP-002-TIP-008"
 ---
 
-# speckit.aioa-enforcement.validate — AIOA Compliance Validation
+# speckit.aioa-enforcement.validate — AIOA TIP Validation
 
 > **Mandatory pre-implementation check.** Called automatically by `before_implement` hook with `optional: false`. Cannot be skipped.
 
-**Purpose:** Verify that implementation artifacts (spec, plan, tasks, constitution) and code comply with all 9 AIOA review gates before any code is written.
+**Purpose:** Verify that ALL `.md` files in the project comply with AIOA TIPs (TIP-002 through TIP-008) before any code is written.
 
 ## Process
 
-### Step 1: Load Artifacts
+### Step 1: Load All Markdown Files
 
-Read these files from the project (if they exist):
-- `spec.md` (or equivalent) — specification
-- `plan.md` (or equivalent) — implementation plan
-- `tasks.md` (or equivalent) — task breakdown
-- `constitution.md` (or equivalent) — project constitution
-- `data-model.md` — data model / contracts
+Scan the entire project directory recursively. Find ALL `*.md` files:
+- Spec files (`spec.md`, `spec.aioa.md`, etc.)
+- Plan files (`plan.md`, etc.)
+- Tasks files (`tasks.md`, etc.)
+- Constitution (`constitution.md`, etc.)
+- Contracts (`contracts/*.md`)
+- Any other `.md` documentation files
 
-Scan all source code files in the project.
+Do NOT hardcode a file list — discover all `.md` files dynamically.
 
-### Step 2: Run Gate Checks
+### Step 2: Run TIP Checks
 
-Check each gate. For every gate:
+Check each TIP against all `.md` files. For every TIP:
 - Record **Evidence** — what was found
 - Record **Violations** (if any) — specific files/lines
 - Assign **Verdict**: PASS or FAIL
 
-#### G1 — Crystallization Radius
+#### TIP-002: Semantic Collision
 
-> *"Minimize the context an agent must consume before making a safe change."*
-
-| Check | Pass Criteria |
-|-------|--------------|
-| Context Budget | Every module/component has `context_budget` annotation in tasks.md |
-| Budget Compliance | Implementation does not exceed declared budgets |
-| R(C) Rating | No file requires understanding >8 files to modify safely |
-
-**Pass:** All modules have budgets, code stays within bounds, no high R(C).  
-**Fail:** Missing budgets, exceeded budgets, or high R(C) without justification.
-
-#### G2 — Semantic Integrity
-
-> *"Preserve meaning across architectural boundaries."*
+> *"Distinct types for distinct concepts — no primitive obsession."*
 
 | Check | Pass Criteria |
 |-------|--------------|
-| Shared Contracts | All cross-boundary data has typed contracts (Pydantic, JSON Schema, dataclass, etc.) |
-| Boundary Parsers | Each boundary parses/validates at entry (Parse Don't Validate) |
-| No Silent Reshapes | Data is not silently transformed between boundaries |
-| Consistent Naming | The same concept has the same name everywhere |
+| No Primitive IDs | Domain identifiers are value objects, not `str`/`int` |
+| No Naming Collision | Same name not used for different concepts across files |
+| Distinct Types | Each domain concept has its own type, even if same structure |
 
-**Pass:** All boundaries have contracts, parsers exist, no silent transformations.  
-**Fail:** Missing contracts, untyped boundary crossings, naming inconsistencies.
+**Pass:** All domain concepts have distinct types, no primitive IDs.  
+**Fail:** Primitive IDs, naming collisions, same type for different concepts.
 
-#### G3 — Local Reasoning
+#### TIP-003: Repository Search Bottleneck
 
-> *"Code should be understandable from local context alone."*
-
-| Check | Pass Criteria |
-|-------|--------------|
-| Explicit Dependencies | All imports/dependencies are declared (no global state, no implicit conventions) |
-| Self-Contained Units | Each function/class can be understood without reading external code |
-| No Hidden State | No global variables, mutable singletons, or thread-local state |
-| Clear Interfaces | Function signatures are complete (typed params, typed returns) |
-
-**Pass:** All code units are self-contained, no globals, clear signatures.  
-**Fail:** Global state, implicit dependencies, unclear interfaces.
-
-#### G4 — Boundaries Explicit
-
-> *"All component boundaries must be clearly declared."*
+> *"Responsibility distributed across narrow, specialized modules. No single-file bottleneck."*
 
 | Check | Pass Criteria |
 |-------|--------------|
-| Boundary Map | All module/component boundaries are declared in plan.md |
-| Boundary Annotations | Every cross-boundary call is annotated in code |
-| Access Control | Cross-boundary access uses public interfaces, not internals |
-| No Backdoors | No private member access across boundaries |
+| No Mega-Files | No `.md` file exceeds context budget (max 7 files to understand) |
+| Distributed Responsibility | Related content is spread across focused files, not one monolithic doc |
+| Clear Boundaries | Each file has a clear scope — agent knows where to look |
 
-**Pass:** All boundaries declared, cross-boundary calls documented.  
-**Fail:** Undeclared boundaries, private access across modules.
+**Pass:** Files are focused, responsibility is distributed, no mega-files.  
+**Fail:** Monolithic files, scattered responsibilities, unclear file scopes.
 
-#### G5 — Contracts Deterministic
+#### TIP-004: Code Crystallization
 
-> *"Interfaces must have deterministic, machine-verifiable contracts."*
-
-| Check | Pass Criteria |
-|-------|--------------|
-| Typed Interfaces | All interfaces use typed parameters and return values |
-| Schema Validation | Data contracts have machine-readable schemas (JSON Schema, Pydantic, OpenAPI) |
-| No `Any` | No untyped parameters, no `Any`/`object` on public interfaces |
-| Idempotency | Side-effect-free functions are idempotent where required |
-
-**Pass:** All interfaces typed, schema-validated, no Any.  
-**Fail:** Untyped interfaces, missing schemas, Any used publicly.
-
-#### G6 — Declarative Straight-Line
-
-> *"Prefer linear, declarative code over complex control flow."*
+> *"No dead wrapper chains — call directly if no value added."*
 
 | Check | Pass Criteria |
 |-------|--------------|
-| Nesting Depth | Maximum nesting ≤ 3 levels |
-| Complex Flow | No deeply nested conditionals, no goto/label, no spaghetti |
-| Declarative Style | Business logic reads as a sequence of steps, not nested branches |
-| Early Returns | Functions use early exit pattern, not deep nesting |
+| No Dead Indirection | No component/module that only forwards without adding logic |
+| Justified Abstractions | Every abstraction has documented consumers |
+| Flat Where Possible | A→C directly when B adds no value |
 
-**Pass:** Max nesting ≤3, straight-line flow, early returns.  
-**Fail:** Deep nesting (>3), complex control flow, convoluted logic.
+**Pass:** No dead wrapper layers, abstractions are justified.  
+**Fail:** Pass-through layers, single-consumer abstractions, unnecessary indirection.
 
-#### G7 — Decompose by Reasoning Not Deployment
+#### TIP-005: Quantum Spectrum
 
-> *"Logical architecture is orthogonal to deployment topology."*
-
-| Check | Pass Criteria |
-|-------|--------------|
-| No Infra Coupling | Components do not reference deployment infrastructure (Docker, K8s, cloud) |
-| Interface-Based | Components depend on interfaces, not on specific implementations |
-| Config Separate | Deployment configuration is external (env vars, config files), not hardcoded |
-| Topology Neutral | Same components work in monolith or microservices without changes |
-
-**Pass:** No deployment coupling, interface-based dependencies, topology-neutral.  
-**Fail:** Hardcoded infrastructure, deployment-specific logic in components.
-
-#### G8 — Extract Under Reuse Pressure
-
-> *"Don't abstract until reuse pressure exists."*
+> *"Components named by their level — Pico, Nano, Micro, not 'Service'."*
 
 | Check | Pass Criteria |
 |-------|--------------|
-| Abstraction Justification | Every new abstraction has documented reuse or isolation pressure |
-| No Premature Extraction | No abstractions created "just in case" or "for future use" |
-| Consumer Count | Abstractions with a single consumer are not extracted (inline instead) |
+| Leveled Naming | Components use Pico/Nano/Micro nomenclature, not generic "Service" |
+| Level-Appropriate Complexity | Pico actors are pure functionality, Nano actors have state, Micro actors are services |
+| No Misleading Names | Component name reflects actual complexity |
 
-**Pass:** All abstractions justified by real reuse/isolation pressure.  
-**Fail:** Premature abstractions, "just in case" extractions, single-use abstractions.
+**Pass:** Components named by level, complexity matches naming.  
+**Fail:** Everything called "Service", misleading generic names.
 
-#### G9 — Event Boundaries
+#### TIP-006: Declarative Straight-Line Code
 
-> *"Use event bus for cross-component communication, not direct calls."*
+> *"Execution mechanics extracted into policies. Business code stays linear."*
 
 | Check | Pass Criteria |
 |-------|--------------|
-| Event Bus for Cross-Component | Cross-component communication uses events, not direct method calls |
-| Direct Call Justification | Any direct cross-component call has documented justification |
-| No Sync Coupling | Components are not synchronously coupled across module boundaries |
-| Event Contracts | Events have typed contracts (schema, routing, payload) |
+| Mechanics Extracted | Retry, timeout, fallback are in separate policies, not inline |
+| Linear Business Logic | Business logic reads as a sequence of steps, not nested branches |
+| No Boilerplate | No repeated try/except/retry patterns across functions |
 
-**Pass:** Cross-component events, no sync coupling, all contracts typed.  
-**Fail:** Direct cross-component calls without justification, sync coupling.
+**Pass:** Mechanics extracted, business logic is straight-line, no boilerplate.  
+**Fail:** Inline retry/fallback, deeply nested business logic.
+
+#### TIP-007: Auditable Data Transfer Objects (ADTO)
+
+> *"All boundary data is ADTO — typed + auditable."*
+
+| Check | Pass Criteria |
+|-------|--------------|
+| Typed Boundaries | All cross-boundary data has typed schemas (ADTO, Pydantic, JSON Schema) |
+| No Raw Dicts | No `output: dict` or `list[dict]` in contracts or schemas |
+| Provenance | State mutations have provenance tracking (who, when, what changed) |
+
+**Pass:** All boundaries typed, no raw dicts, provenance tracked.  
+**Fail:** Untyped boundaries, raw dicts, no provenance.
+
+#### TIP-008: Event-Driven Integration
+
+> *"All cross-component communication goes through an event bus (even in-memory)."*
+
+| Check | Pass Criteria |
+|-------|--------------|
+| Event Bus | Cross-component communication uses events, not direct calls |
+| In-Memory Default | If no external broker, use InMemoryEventBus |
+| Typed Events | Event payloads are typed (ADTO) |
+
+**Pass:** Cross-component via events, typed payloads, in-memory fallback documented.  
+**Fail:** Direct cross-component calls, untyped events, no event bus.
 
 ### Step 3: Generate Validation Report
 
@@ -162,27 +128,25 @@ Format the report:
 ## AIOA Validation Report
 {date}, Project: {project_name}
 
-### Gate Results
-| Gate | Verdict | Violations |
-|------|---------|------------|
-| G1: Crystallization Radius | PASS/FAIL | {n} |
-| G2: Semantic Integrity | PASS/FAIL | {n} |
-| G3: Local Reasoning | PASS/FAIL | {n} |
-| G4: Boundaries Explicit | PASS/FAIL | {n} |
-| G5: Contracts Deterministic | PASS/FAIL | {n} |
-| G6: Declarative Straight-Line | PASS/FAIL | {n} |
-| G7: Reasoning ≠ Deployment | PASS/FAIL | {n} |
-| G8: Extract Under Reuse | PASS/FAIL | {n} |
-| G9: Event Boundaries | PASS/FAIL | {n} |
+### TIP Results
+| TIP | Verdict | Violations |
+|-----|---------|------------|
+| TIP-002: Semantic Collision | PASS/FAIL | {n} |
+| TIP-003: Repository Search Bottleneck | PASS/FAIL | {n} |
+| TIP-004: Code Crystallization | PASS/FAIL | {n} |
+| TIP-005: Quantum Spectrum | PASS/FAIL | {n} |
+| TIP-006: Declarative Straight-Line | PASS/FAIL | {n} |
+| TIP-007: Auditable Data Transfer Objects (ADTO) | PASS/FAIL | {n} |
+| TIP-008: Event-Driven Integration | PASS/FAIL | {n} |
 
 ### Violation Details
 
-**G{n}: {Gate Name} — FAIL**
+**TIP-{N}: {TIP Name} — FAIL**
 - {file}:{line} — {description of violation}
 - {file}:{line} — {description of violation}
 
 ### Summary
-- Total Gates: 9
+- Total TIPs: 7
 - Passed: {n}
 - Failed: {n}
 - Blocking: {YES/NO}
@@ -190,12 +154,12 @@ Format the report:
 
 ### Step 4: Determine Verdict
 
-- **ALL gates PASS** → Output:
+- **ALL TIPs PASS** → Output:
   ```
   ## AIOA Compliance: PASS ✅
   Proceeding to implementation.
   ```
-- **ANY gate FAIL** → Output:
+- **ANY TIP FAIL** → Output:
   ```
   ## AIOA Compliance: FAIL ❌
   **Implementation BLOCKED.** 
@@ -204,8 +168,8 @@ Format the report:
 
 ### Important Rules
 
-1. **Be thorough.** Scan ALL source files, not just artifacts.
+1. **Scan ALL .md files.** Do not hardcode file paths — glob for all markdown files.
 2. **Be specific.** For each violation, include file path and line number.
-3. **Be deterministic.** No "partial" verdicts — only PASS or FAIL per gate.
-4. **Do not skip.** This command runs with `optional: false`. Execute every gate check completely.
+3. **Be deterministic.** No "partial" verdicts — only PASS or FAIL per TIP.
+4. **Do not skip.** This command runs with `optional: false`. Execute every TIP check completely.
 5. **Document provenance.** Create or update `aioa-validation-report.md` in the project root with the full report.
