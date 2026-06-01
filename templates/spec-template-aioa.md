@@ -23,12 +23,31 @@
 | Surface area | {{context_surface_area_description}} |
 | Mitigation | {{crystallization_radius_mitigation_1}}; {{crystallization_radius_mitigation_2}} |
 
+#### TIP-004: Indirection Audit
+| Component | Exported? | Consumers | Implementations | Dead? |
+|-----------|-----------|-----------|-----------------|-------|
+| {{component_1}} | 🟢 / 🔴 | {{consumers_1}} | {{impls_1}} | 🟢 Live / 🔴 Dead |
+| {{component_2}} | 🟢 / 🔴 | {{consumers_2}} | {{impls_2}} | 🟢 Live / 🔴 Dead |
+- [ ] No pass-through layers (A→B→C with B just forwarding)
+- [ ] No dead exports (exported but never consumed)
+- [ ] All base classes have ≥2 implementations
+
 ### P3: Semantic Integrity
 | Boundary | Data/Behavior | Integrity Requirement |
 | {{boundary_1}} | {{data_behavior_1}} | {{integrity_requirement_1}} |
 | {{boundary_2}} | {{data_behavior_2}} | {{integrity_requirement_2}} |
 | Contracts | {{semantic_contract_1}}; {{semantic_contract_2}} |
 | Validation (TIP-007) | {{boundary_validation_strategy}} |
+
+#### TIP-002: Semantic Collision Check
+| Domain Concept | Current Type | Should Be | Collision Risk |
+|----------------|-------------|-----------|----------------|
+| {{concept_1}} | {{type_1}} | {{value_object_1}} | 🟢 Safe / 🔴 Risk |
+| {{concept_2}} | {{type_2}} | {{value_object_2}} | 🟢 Safe / 🔴 Risk |
+- [ ] No primitive types in domain-critical flows
+- [ ] No naming collision risks (similar names for different concepts)
+- [ ] No untyped structures (`dict`, `list[dict]`) without schema
+- [ ] No duplicate definitions of the same concept across bounded contexts
 
 ### P4: Boundaries Explicit
 | Boundary | Type | Responsibility | Interface |
@@ -47,12 +66,29 @@
 - [ ] Breaking changes require version bump
 - [ ] Consumer-driven contracts defined
 
-### P6: Control-Flow Complexity
+#### TIP-007: Strict Contract Flow
+- [ ] No `output: dict` or `list[dict]` crossing component boundaries — each component has typed output contract
+- [ ] Agent/component output schemas defined (each agent returns its own typed result, not a generic dict)
+- [ ] Business logic does not re-validate what gateway already guaranteed (no `.get()` fallbacks on validated data)
+- [ ] API responses use typed enums, not raw strings for status/category fields
+
+### P6: Declarative Straight-Line
 | Aspect | Assessment |
 | Control flow depth | {{control_flow_depth}} (acceptable / needs refactoring) |
 | Mutation state | {{mutation_state}} (immutable / localized / scattered) |
 | Declarative ratio | {{declarative_ratio}}% |
 | Mitigation | {{complexity_mitigation_1}}; {{complexity_mitigation_2}} |
+
+#### TIP-006: Declarative Straight-Line Code
+| Anti-Pattern | Found? | Location |
+|---------------|--------|----------|
+| Manual retry/fallback loops instead of retry policy | 🟢 None / 🔴 Found | {{retry_loop_location}} |
+| try/except boilerplate repeated in N places | 🟢 None / 🔴 Found | {{try_except_repeated_location}} |
+| Procedural fallback chain (try→try→default) | 🟢 None / 🔴 Found | {{fallback_chain_location}} |
+| Manual collection processing (for/while) instead of operators | 🟢 None / 🔴 Found | {{manual_loop_location}} |
+- [ ] Recurring execution mechanics extracted into prepared classes (TIP-006)
+- [ ] LLM/IO calls use retry policy, not raw try/except
+- [ ] Business code describes WHAT, execution mechanics are in abstractions
 
 ### P7: Reasoning Boundaries not Deployment
 - [ ] No topology assumptions — Architecture is deployment-agnostic
@@ -65,7 +101,17 @@
 | {{abstraction_1}} | {{consumer_count_1}} | {{justification_1}} | 🟢 Justified / 🟡 Questionable / 🔴 Premature |
 | {{abstraction_2}} | {{consumer_count_2}} | {{justification_2}} | 🟢 Justified / 🟡 Questionable / 🔴 Premature |
 
-**Rule:** No abstraction with <2 confirmed consumers unless explicitly justified.
+**Rule:** No abstraction with <2 confirmed consumers unless explicitly justified. (Consumers ≠ implementations — a base class with 2 implementations but 0 consumers is dead code.)
+
+#### TIP-005: Quantum Spectrum Classification
+| Component | Spectrum Level | Justification |
+|-----------|---------------|---------------|
+| {{component_spec_1}} | Micro / Nano / Pico | {{justification_spec_1}} |
+| {{component_spec_2}} | Micro / Nano / Pico | {{justification_spec_2}} |
+- [ ] Micro Actor — primary business boundary, owns capability
+- [ ] Nano Actor — reusable business workflow (extracted under reuse pressure)
+- [ ] Pico Actor — deterministic execution primitive (extracted under reuse pressure)
+- [ ] No component extracted without consumer (TIP-005: start large, extract downward)
 
 ### P9: Event Boundaries
 | Communication Path | Method | Rationale |
@@ -75,6 +121,16 @@
 - [ ] Direct sync calls are exceptions with documented rationale
 - [ ] Event schemas versioned and shared
 - [ ] Event handlers idempotent
+
+#### TIP-008: Event-Driven Integration
+| Component | Coupling Type | Decoupled Via | Verdict |
+|-----------|--------------|---------------|---------|
+| {{coupling_component_1}} | sync direct / event-driven | {{decoupled_via_1}} | 🟢 Decoupled / 🔴 Coupled |
+| {{coupling_component_2}} | sync direct / event-driven | {{decoupled_via_2}} | 🟢 Decoupled / 🔴 Coupled |
+- [ ] Components communicate through events, not direct function calls where feasible
+- [ ] No centralized orchestrator that knows all component internals
+- [ ] Cross-component state passed via event contracts, not private attributes
+- [ ] Each component can be understood independently (local reasoning)
 
 ### P10: Runtime State Explainability
 | State | Location | Provenance | Inspectable? |

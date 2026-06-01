@@ -12,13 +12,15 @@
 |-----------|--------|-------|-------------|
 | {{component_1}} | {{before_1}} | {{after_1}} | 🟢 No / 🔴 Yes |
 | {{component_2}} | {{before_2}} | {{after_2}} | 🟢 No / 🔴 Yes |
-- [ ] No new cross-module deps · [ ] No additional context files needed · [ ] Dependencies explicit · [ ] Budget annotations accurate · [ ] No hidden context (shared mutable state, ambient conventions)
+- [ ] No new cross-module deps · [ ] No additional context files needed · [ ] Dependencies explicit · [ ] Budget annotations accurate · [ ] No hidden context (shared mutable state, ambient conventions) · [ ] All abstractions justified by reuse pressure
 | Anti-pattern | Found? | Location |
 | Global state mutation | 🟢 No / 🔴 Yes | {{global_state_location}} |
 | Shared mutable cross-module | 🟢 No / 🔴 Yes | {{shared_mutable_location}} |
 | Implicit convention dependency | 🟢 No / 🔴 Yes | {{implicit_convention_location}} |
 | Cross-cutting concern undeclared | 🟢 No / 🔴 Yes | {{cross_cutting_location}} |
 | Context hidden in config | 🟢 No / 🔴 Yes | {{config_hidden_location}} |
+| Abstraction without consumer (0 impls) | 🟢 None / 🔴 Found | {{zero_consumer_location}} |
+| Single-implementation base class | 🟢 Justified / 🔴 Premature | {{single_impl_location}} |
 **Verdict:** [ ] PASS — Radius maintained/improved · [ ] PARTIAL — Minor increase justified · [ ] FAIL — Radius regressed; refactor required
 
 ### G2: Semantic Integrity
@@ -42,26 +44,33 @@
 **Verdict:** [ ] PASS · [ ] PARTIAL — Minor issues · [ ] FAIL — Requires extensive external context
 
 ### G4: Boundary Explicitness
-- [ ] Every boundary crossed declared with name/responsibility · [ ] Access through declared interfaces only · [ ] No direct internal access · [ ] No implicit boundaries via conventions/directory structure
+- [ ] Every boundary crossed declared with name/responsibility · [ ] Access through declared interfaces only · [ ] No direct internal access · [ ] No implicit boundaries via conventions/directory structure · [ ] No declared exports that are never consumed
 | Violation | Component | Resolution |
 | {{violation_1}} | {{component_violated_1}} | {{resolution_1}} |
 | {{violation_2}} | {{component_violated_2}} | {{resolution_2}} |
+| Unused declared export | 🟢 None / 🔴 Found | {{dead_export_location}} |
 **Verdict:** [ ] PASS · [ ] PARTIAL — Minor issues · [ ] FAIL — Implicit boundaries; must be declared
 
 ### G5: Contract Determinism
-- [ ] Every interface has schema/type definition · [ ] Schema validation enforced at boundaries (TIP-007) · [ ] No `any`/untyped data crossing · [ ] Contract versioning respected · [ ] Consumer-driven contracts satisfied
+- [ ] Every interface has schema/type definition · [ ] Schema validation enforced at boundaries (TIP-007) · [ ] No `any`/untyped data crossing · [ ] Contract versioning respected · [ ] Consumer-driven contracts satisfied · [ ] No `output: dict` or `list[dict]` in typed DTOs (TIP-007) · [ ] No defensive `.get()` on validated data
 | Non-Deterministic Pattern | Found? | Location |
 | Untyped boundary crossing | 🟢 No / 🔴 Yes | {{untyped_location}} |
 | Missing input validation | 🟢 No / 🔴 Yes | {{missing_validation_location}} |
 | Inconsistent error shapes | 🟢 No / 🔴 Yes | {{error_shape_location}} |
 | Schema version mismatch | 🟢 No / 🔴 Yes | {{version_mismatch_location}} |
+| `output: dict` in typed DTO | 🟢 None / 🔴 Found | {{dict_output_location}} |
+| `list[dict]` in contract | 🟢 None / 🔴 Found | {{dict_list_location}} |
+| Defensive `.get()` on validated data | 🟢 None / 🔴 Found | {{defensive_get_location}} |
 **Verdict:** [ ] PASS · [ ] PARTIAL — Minor gaps · [ ] FAIL — Non-deterministic contracts
 
 ### G6: Control-Flow Simplicity
-- [ ] No deep nesting (depth > 3) · [ ] Complex loops → declarative ops · [ ] Mutable state localized/minimized · [ ] Linear control flow · [ ] Async uses async/await
+- [ ] No deep nesting (depth > 3) · [ ] Complex loops → declarative ops · [ ] Mutable state localized/minimized · [ ] Linear control flow · [ ] Async uses async/await · [ ] No repeated try/except boilerplate (TIP-006) · [ ] Manual execution mechanics extracted into prepared classes · [ ] Fallback chains use declarative pipeline, not procedural try→try→default
 | Hotspot | Issue | Recommendation |
 | {{complex_location_1}} | {{complex_issue_1}} | {{complex_recommendation_1}} |
 | {{complex_location_2}} | {{complex_issue_2}} | {{complex_recommendation_2}} |
+| Repeated try/except pattern | {{try_except_issue}} | Extract into prepared class with retry policy |
+| Manual fallback chain | {{fallback_issue}} | Use declarative pipeline (parse → or_else → or_else) |
+| Boilerplate _call_llm / wrapper repeated | {{boilerplate_issue}} | Move to base class or shared utility |
 **Verdict:** [ ] PASS · [ ] PARTIAL — Minor issues · [ ] FAIL — Complex flow must be simplified
 
 ### G7: Decomposition Quality
@@ -72,10 +81,12 @@
 **Verdict:** [ ] PASS · [ ] PARTIAL — Minor issues · [ ] FAIL — Needs restructuring
 
 ### G8: Integration Locality
-- [ ] Cross-component integrations declared at integration point · [ ] No spaghetti integration · [ ] Integration contracts versioned/documented · [ ] No transitive coupling (A→B→C chains)
+- [ ] Cross-component integrations declared at integration point · [ ] No spaghetti integration · [ ] Integration contracts versioned/documented · [ ] No transitive coupling (A→B→C chains) · [ ] No centralized orchestrator with full component knowledge (TIP-008) · [ ] Cross-component state via events, not private attributes
 | Issue | Components | Recommendation |
 | {{integration_issue_1}} | {{integration_components_1}} | {{integration_recommendation_1}} |
 | {{integration_issue_2}} | {{integration_components_2}} | {{integration_recommendation_2}} |
+| Centralized orchestrator | {{orchestrator_components}} | Extract to event choreography |
+| Private attribute cross-component coupling | {{private_coupling_location}} | Replace with event contract |
 **Verdict:** [ ] PASS · [ ] PARTIAL — Minor issues · [ ] FAIL — Restructuring required
 
 ### G9: Runtime Explainability
@@ -89,7 +100,8 @@
 
 | TIP | Checks |
 |-----|--------|
-| **TIP-002:** Semantic Collision | [ ] No conflatable domain concepts · [ ] Value objects over primitives in domain-critical flows · [ ] Naming = architecture, not cosmetics |
+| **TIP-002:** Semantic Collision | [ ] No primitive types (`str`/`int`/`dict`) in domain-critical flows · [ ] Value objects for all domain IDs · [ ] No naming collision risks (similar names for different concepts) · [ ] No untyped structures without schema · [ ] No duplicate definitions across bounded contexts · [ ] Naming = architecture, not cosmetics |
+| **TIP-004:** Code Crystallization | [ ] No pass-through layers (A→B→C with B just forwarding) · [ ] All base classes have ≥2 implementations · [ ] No dead exports (declared but never consumed) · [ ] Indirection depth ≤ 2 |
 | **TIP-006:** Declarative Code | [ ] No manual loops where collection operators suffice · [ ] No hand-written retry · [ ] No inline transaction plumbing · [ ] Business code expresses intent, not machinery |
 | **TIP-007:** Strict JSON Gateways | [ ] Input validated at boundary · [ ] DTOs as typed contracts · [ ] Technical validation ≠ business validation · [ ] No defensive boilerplate in core methods |
 | **TIP-009:** Auditable DTOs | [ ] State transitions self-documenting · [ ] Mutation history recorded · [ ] Provenance: what, who, why, when |

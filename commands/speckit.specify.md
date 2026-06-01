@@ -108,14 +108,6 @@ For each principle, prompt the user and record the assessment.
 **Record:** State inventory with provenance tracking plan.
 **TIP-009:** Use Auditable DTOs (ADTO) with provenance tracking.
 
-### TIP-004: Code Crystallization Analysis
-
-Before approving, assess Architectural Crystallization Radius:
-1. **Indirection layers:** How many pass-through interfaces, factory chains, or mediators?
-2. **Business logic density:** Is logic directly visible or hidden behind abstractions?
-3. **Modification path:** Can the feature be modified in 1-3 files, or 9+ files?
-**Target:** Reduce to LOW (1-3 files).
-
 ### TIP-005: Quantum Spectrum Classification
 
 Classify each component by Quantum Spectrum level:
@@ -127,6 +119,48 @@ Classify each component by Quantum Spectrum level:
 | **Pico Actor** | Deterministic execution primitive | FindCustomerById, FormatInvoiceNumber |
 
 **Rule:** Start large (Micro Actor). Extract downward only when reuse pressure appears.
+
+### TIP-003: Dead Code Cleanliness
+
+Before approving, verify no declared exports remain unused:
+1. Check for components/functions declared and exported but never imported or consumed
+2. Flag unused exports as dead code — remove or justify
+3. Track dead export locations for cleanup
+
+| Dead Export | Found? | Location |
+|-------------|--------|---------|
+| {{dead_export_1}} | 🟢 None / 🔴 Found | {{dead_export_location_1}} |
+| {{dead_export_2}} | 🟢 None / 🔴 Found | {{dead_export_location_2}} |
+
+### TIP-004: Code Crystallization — Indirection Audit
+
+Before approving, verify no dead abstraction layers:
+
+1. **Pass-through audit:** Count layers between interface and implementation
+2. **Single-impl base classes:** Flag any base class with only one concrete implementation
+3. **Zero-consumer components:** Flag any exported component with no importers
+
+| Indirection Layer | Interface | Consumers | Implementations | Verdict |
+|-------------------|-----------|-----------|-----------------|---------|
+| {{layer_1}} | {{interface_1}} | {{consumers_1}} | {{impls_1}} | 🟢 Justified / 🔴 Dead |
+| {{layer_2}} | {{interface_2}} | {{consumers_2}} | {{impls_2}} | 🟢 Justified / 🔴 Dead |
+
+- [ ] All base classes have ≥2 implementations
+- [ ] All exported components have ≥1 consumer
+- [ ] No pass-through layers (A→B→C with B just forwarding)
+
+### TIP-002: Semantic Collision Check
+
+Before approving, verify domain semantics are preserved:
+1. **Primitive types:** Are `str`/`int`/`dict` used where value objects should be?
+2. **Naming collision:** Could similar names (`call_id` vs `trace_id`) be confused by an AI agent?
+3. **Untyped structures:** Are there `dict` or `list[dict]` without schema definitions?
+4. **Bounded contexts:** Is the same concept defined in multiple places?
+
+| Domain Concept | Current Type | Should Be | Collision Risk |
+|----------------|-------------|-----------|----------------|
+| {{concept_1}} | {{type_1}} | {{value_object_1}} | 🟢 Safe / 🔴 Risk |
+| {{concept_2}} | {{type_2}} | {{value_object_2}} | 🟢 Safe / 🔴 Risk |
 
 ### Step 3: Generate AIOA-Compliant Specification
 
@@ -148,6 +182,9 @@ Write the specification using the AIOA spec template with all section populated.
 - [ ] Context budget estimated
 - [ ] Shared semantic contracts identified
 - [ ] TIPs referenced where appropriate
+- [ ] TIP-002: No primitive types in domain-critical flows
+- [ ] TIP-002: No naming collision risks
+- [ ] TIP-002: No untyped structures (`dict`, `list[dict]`)
 
 ---
 

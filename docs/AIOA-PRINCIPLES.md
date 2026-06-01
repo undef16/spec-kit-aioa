@@ -501,6 +501,29 @@ A change with any **FAIL** gate score is **REJECTED**. A change with more than 2
 
 ## Key TIPs
 
+### TIP-002: Semantic Collision
+
+When multiple domain concepts are linguistically similar, AI agents silently collapse them into a single identifier. The code remains syntactically correct, type-safe, and passing tests — but business semantics are gone.
+
+**Rules:**
+- Never expose primitive types (`str`, `int`, `dict`) in domain-critical flows — use value objects
+- Treat naming as architecture, not cosmetics — similar names cause silent logic corruption
+- Add semantic validation to AI-generated code — the compiler protects syntax, not meaning
+- Strictly separate bounded contexts — no duplicate definitions of the same concept
+
+**Example violation:**
+```python
+# WRONG — three concepts collapsed into one type
+call_id: str      # could be "C001"
+trace_id: str     # could also be "C001" — collision!
+customer_id: str  # could also be "C001" — collision!
+
+# CORRECT — value objects prevent collision
+class CallId(str): ...
+class TraceId(str): ...
+class CustomerId(str): ...
+```
+
 ### TIP-007: Strict JSON Gateways
 
 All component boundaries SHALL validate data using strict, runtime-verifiable schemas (Zod, TypeBox, OpenAPI, JSON Schema). No unvalidated data SHALL cross a component boundary. Parse at the gateway, trust internally.
@@ -547,6 +570,7 @@ Every DTO that crosses a component boundary or represents persisted state SHALL 
 | Premature Abstraction | Interfaces with single implementation "for flexibility" | P8 | Keep concrete until reuse pressure exists |
 | Synchronous Spaghetti | A→B→C→A circular cross-component calls | P6, P9 | Break with events (TIP-008) |
 | Black Box State | Runtime state not inspectable, mutations not logged | P10 | ADTO pattern with provenance (TIP-009) |
+| Semantic Collision | Primitive types in domain flows, similar naming causes silent corruption | P3, P5 | Value objects for domain IDs, typed structures over `dict` |
 
 ---
 

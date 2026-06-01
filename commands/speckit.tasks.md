@@ -2,6 +2,11 @@
 description: "Tasks command with AIOA annotations and context budgets"
 scripts:
   - specify tasks
+handoffs:
+  - label: Validate AIOA Compliance
+    agent: speckit.aioa-enforcement.validate
+    prompt: "Run mandatory AIOA compliance validation before implementation"
+    send: true
 ---
 
 # speckit.tasks — AIOA-Enhanced Tasks Command
@@ -87,7 +92,7 @@ For tasks modifying significant state:
 - [ ] Mutation slices focus on business transitions, not field-level noise
 - [ ] State provenance travels with the object
 
-**ADTO Implementation Checklist:**
+**ADTO Implementation Checklist:** (see [ADTO-EXAMPLE.md](../docs/ADTO-EXAMPLE.md) for full example with anti-patterns)
 - [ ] Created/modified objects have mutation history
 - [ ] History records business-significant transitions only
 - [ ] Each caller produces one mutation slice

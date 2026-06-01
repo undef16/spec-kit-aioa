@@ -59,6 +59,29 @@ specify preset info aioa
 # List installed presets
 specify preset list
 ```
+
+### Extension (AIOA Enforcement)
+
+For mandatory pre-implementation AIOA compliance validation, install the companion extension:
+
+```bash
+specify extension add --from https://github.com/undef16/spec-kit-aioa/archive/refs/heads/main.zip
+```
+
+### From local folder (development)
+```bash
+specify extension add --dev D:\Work\spec-kit-aioa
+```
+
+The extension adds a mandatory `before_implement` hook that automatically runs AIOA compliance validation (`/speckit.aioa-enforcement.validate`) every time `/speckit.implement` is called. The hook has `optional: false` — it **cannot be skipped**.
+
+What it does:
+- Loads all project artifacts (spec, plan, tasks, constitution)
+- Scans all source code
+- Validates all 9 AIOA review gates (G1–G9) with deterministic pass/fail criteria
+- **Blocks implementation** if any gate fails
+- Generates `aioa-validation-report.md` with full violation details
+
 ---
 
 ## How It Modifies the SDD Workflow
@@ -77,9 +100,9 @@ Each task is annotated with:
 - All applicable AIOA principle checks
 - Integrity gates at every boundary crossing
 - Explainability requirements for runtime state
+### 4. Code Review (`/speckit.aioa-enforcement.review`)
 
-### 4. Code Review (`/speckit.review`)
-The AIOA code review template enforces all **9 review gates** (note: `/speckit.review` is AIOA-specific — it is not part of the core Spec Kit):
+The AIOA code review template enforces all **9 review gates** (note: `/speckit.aioa-enforcement.review` is AIOA-specific — it is not part of the core Spec Kit):
 1. Crystallization Radius — context budget check
 2. Semantic Integrity — shared types and boundary contracts
 3. Local Reasoning — can code be understood without external context?
@@ -155,8 +178,9 @@ These commands are typed inside an AI coding assistant (GitHub Copilot, Claude C
 | `/speckit.analyze` | Cross-artifact consistency check |
 | `/speckit.implement` | Execute implementation tasks |
 | `/speckit.checklist` | Generate quality checklists |
-| `/speckit.review` | Review code against all 9 AIOA review gates |
+| `/speckit.aioa-enforcement.review` | Review code against all 9 AIOA review gates |
 | `/speckit.taskstoissues` | Convert tasks to GitHub issues |
+| `/speckit.aioa-enforcement.validate` | Pre-implementation AIOA compliance validation (mandatory hook, requires extension) |
 
 ### ⚠️ Important: Mentioning principles in `/speckit.constitution`
 
@@ -210,7 +234,7 @@ Each plan step includes:
 ### Review code against AIOA principles
 
 ```
-/speckit.review
+/speckit.aioa-enforcement.review
 ```
 
 The review template checks all 9 review gates:
@@ -248,11 +272,23 @@ spec-kit-aioa-preset/
     ├── AIOA-PRINCIPLES.md              # Full AIOA principles reference
     ├── CRYSTALLIZATION-RADIUS.md       # Crystallization Radius guide
     ├── SEMANTIC-INTEGRITY.md           # Semantic Integrity guide
-    ├── BOUNDARIES.md                   # Boundary declarations (P4)
-    ├── CONTEXT-BUDGET.md               # Context budget annotations (P2)
     ├── JSON-SCHEMA.md                  # Template JSON schemas (P5/TIP-007)
-    └── PROVENANCE.md                   # Provenance tracking (P10/TIP-009)
+    └── ADTO-EXAMPLE.md                 # ADTO implementation with provenance (P10/TIP-009)
 ```
+
+### Extension Structure
+
+The AIOA Enforcement Extension adds:
+
+```
+aioa-enforcement/
+├── extension.yml                       # Extension manifest with mandatory before_implement hook
+└── commands/
+    ├── speckit.aioa-enforcement.validate.md        # AIOA compliance validation command (G1-G9)
+    └── speckit.aioa-enforcement.review.md          # AIOA code review command (G1-G9 + TIP compliance)
+```
+
+Install alongside the preset for comprehensive AIOA enforcement.
 
 ---
 
