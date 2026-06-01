@@ -1,4 +1,6 @@
-# AI-Oriented Architecture (AIOA) — Spec Kit Preset
+# [AI-Oriented Architecture (AIOA)](https://github.com/undef16/AI-Oriented-Architecture) — Spec Kit Preset
+
+
 
 > **Makes your codebase safe for AI coding assistants.**  
 > Every architectural decision is guided by Technical Implementation Patterns (TIP-002-TIP-008).
@@ -7,7 +9,7 @@
 
 ## What is AIOA?
 
-**AI-Oriented Architecture (AIOA)** is an architectural approach designed for a world where AI coding assistants (Claude Code, Copilot, Cursor) write, review, and maintain code alongside humans. Traditional architecture patterns optimize for human comprehension; AIOA optimizes for **predictable, safe AI intervention**.
+[**AI-Oriented Architecture (AIOA)**](https://github.com/undef16/AI-Oriented-Architecture) is an architectural approach designed for a world where AI coding assistants (Claude Code, Copilot, Cursor) write, review, and maintain code alongside humans. Traditional architecture patterns optimize for human comprehension; AIOA optimizes for **predictable, safe AI intervention**.
 
 ### Core Constraints
 
@@ -62,7 +64,7 @@ specify preset list
 For mandatory pre-implementation AIOA compliance validation, install the companion extension:
 
 ```bash
-specify extension add --from https://github.com/undef16/spec-kit-aioa/archive/refs/heads/main.zip
+specify extension add aioa --from https://github.com/undef16/spec-kit-aioa/archive/refs/heads/main.zip
 ```
 
 ### From local folder (development)
