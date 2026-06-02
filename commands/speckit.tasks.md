@@ -33,6 +33,7 @@ Every task embodies AIOA from the start — no separate checklist:
 For each plan step, create tasks with AIOA annotations. Each task must reference AIOA.md for applicable TIPs.
 
 Task annotation structure:
+- Signatures (`.signatures:`) — all classes, methods with parameters, types, and functions this task introduces
 - Context budget (files to read/modify)
 - AIOA TIPs applicable to this task
 - Verification criteria
@@ -70,11 +71,27 @@ Every stateful task needs ADTO provisions. See AIOA.md for ADTO requirements.
 ### Rule 5: Group Related Tasks
 Tasks within same component should be sequential to minimize context reloading.
 
+### Rule 6: Every Task Declares Signatures
+
+Every task MUST include `.signatures:` listing ALL classes, methods (with parameters), types, and functions it introduces. This creates a contract between task definition and implementation. Code review (`speckit.code-review`) verifies and syncs these signatures with actual code.
+
+Format: `.signatures: ClassName, ClassName.method(param: Type): Return, DataType, FunctionName(param: Type): Return`
+
+Example:
+```markdown
+- [ ] T005 Create domain ADTOs
+  .signatures: TuningRequest, TuningResult, StrategyCandidate, ExecutionPolicy
+
+- [ ] T007 Create EventBus + TuningEvents
+  .signatures: InMemoryEventBus, InMemoryEventBus.publish(event: Event): None, InMemoryEventBus.subscribe(event_type, handler): None, TuningStarted, TrialCompleted
+```
+
 ---
 
 ## Validation
 
 - [ ] All tasks embody AIOA TIPs natively
 - [ ] Every task has context budget
+- [ ] Every task has `.signatures:` with declared classes, methods, types, functions
 - [ ] Tasks ordered to minimize context reloading
 - [ ] No violations documented

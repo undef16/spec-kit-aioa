@@ -61,6 +61,35 @@ Format the report:
   Fix all violations listed above before proceeding.
   ```
 
+### Step 5: Sync Task Signatures with Code
+
+After code review, sync the `.signatures:` declarations in all `tasks.md` files with the actual code:
+
+1. Discover all `tasks.md` files via glob
+2. For each file, extract every `.signatures:` entry
+3. For each declared signature, check if it exists in the source code:
+   - Classes: `class ClassName`, `struct ClassName`, `dataclass ClassName`
+   - Types: `TypeName = ...`, `class TypeName`, `enum TypeName`
+   - Methods: `ClassName.methodName` — search in the class scope
+   - Functions: `def methodName`, `func methodName`
+4. For missing signatures (declared but not in code):
+   - Remove them from `.signatures:` — mark as removed with `# REMOVED — not in code`
+5. For found signatures (in code but not declared):
+   - Add them to `.signatures:` — append with `# ADDED — found in code`
+6. For drifted signatures (declared signature differs from code):
+   - Update `.signatures:` to match actual code signatue — `# SYNCED — signature changed`
+
+Always sync. Even if code review found violations, the `.signatures:` must reflect reality. This ensures tasks.md is always an accurate catalog of what exists.
+
+After sync, append to the code review report:
+```
+### Signature Sync
+- Entries synced: {n}
+- Removed (not in code): {n}
+- Added (found in code): {n}
+- Updated (signature changed): {n}
+```
+
 ### Important Rules
 
 1. **Scan ALL source files.** Do not hardcode file paths — glob for source files using the project's language patterns.

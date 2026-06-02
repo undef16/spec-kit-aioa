@@ -6,6 +6,10 @@
 > **AIOA Preset Active** — Tasks are AIOA-native by construction.
 > No separate AIOA validation step — each task already embodies AIOA.
 
-Task design rules — every task must respect AIOA TIPs. For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md).
+Task design rules:
+- Every task must respect AIOA TIPs
+- Every task MUST include `.signatures:` listing all classes, methods (with parameters), types, and functions it introduces
+- Code review syncs these signatures with actual implementation
+- For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md)
 
 {{CORE_TEMPLATE}}
