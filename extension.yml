@@ -4,7 +4,7 @@ extension:
   id: "aioa-enforcement"
   name: "AIOA Compliance Enforcement"
   version: "1.0.0"
-  description: "AIOA enforcement extension with mandatory hooks for constitution, specify, and implement phases — enforces TIP-002-TIP-008 compliance across all phases"
+  description: "AIOA enforcement extension with mandatory hooks for constitution, specify, and implement phases — enforces AIOA TIP compliance across all phases"
   author: "undef16"
   repository: "https://github.com/undef16/spec-kit-aioa"
   license: "MIT"
@@ -55,3 +55,8 @@ hooks:
     prompt: "Running AIOA principle validation after implement..."
     args:
       scope: "implement"
+
+  after_implement_code_review:
+    command: "speckit.code-review"
+    optional: false
+    prompt: "Running AIOA code review on generated source files..."

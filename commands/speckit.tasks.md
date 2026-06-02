@@ -12,7 +12,7 @@ handoffs:
 # speckit.tasks — AIOA Tasks Command
 
 **Preset:** aioa (version 1.0.0)
-**Reference:** [AIOA.md](../docs/AIOA.md) — Technical Implementation Patterns (TIP-002-TIP-008)
+**Reference:** [AIOA.md](../docs/AIOA.md) — Technical Implementation Patterns
 
 ---
 
@@ -26,13 +26,7 @@ Read the plan and extract architecture decisions, component boundaries, context 
 
 Every task embodies AIOA from the start — no separate checklist:
 
-- **Task data** uses ADTO — typed + auditable (TIP-007)
-- **Cross-component tasks** communicate via events, not direct calls (TIP-008)
-- **Task boundaries** respect Pico/Nano/Micro levels (TIP-005)
-- **No dead wrappers** in task implementation — call directly (TIP-004)
-- **Retry/fallback/timeout** extracted into policies, not inline (TIP-006)
-- **Task data** uses value objects, not primitives (TIP-002)
-- **Context budget** max 7 files per task (TIP-003)
+- Apply AIOA TIPs directly to each task. For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md).
 
 ### Step 3: Decompose into Tasks
 
@@ -68,10 +62,10 @@ Every task must have a realistic context budget. 1-5 files acceptable; 6-7 consi
 Each task embodies AIOA — no separate compliance validation.
 
 ### Rule 3: No Deployment Coupling
-Tasks must not encode deployment assumptions (TIP-007: architectural independence).
+Tasks must not encode deployment assumptions. See AIOA.md for architectural independence rules.
 
 ### Rule 4: State Provenance Must Be Planned
-Every stateful task needs TIP-007 (ADTO) provisions.
+Every stateful task needs ADTO provisions. See AIOA.md for ADTO requirements.
 
 ### Rule 5: Group Related Tasks
 Tasks within same component should be sequential to minimize context reloading.

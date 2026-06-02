@@ -7,7 +7,7 @@ scripts:
 # speckit.specify — AIOA Specification Command
 
 **Preset:** aioa (version 1.0.0)
-**Reference:** [AIOA.md](../docs/AIOA.md) — Technical Implementation Patterns (TIP-002-TIP-008)
+**Reference:** [AIOA.md](../docs/AIOA.md) — Technical Implementation Patterns
 
 ---
 
@@ -27,13 +27,7 @@ Capture:
 
 AIOA is not a separate check — it IS the architecture. Apply TIPs directly when designing each layer:
 
-- **Domain Entities** → ADTO base class for all entities (TIP-007)
-- **Value Objects** → distinct types per domain concept, no `str`/`int` for IDs (TIP-002)
-- **Services** → communicate via event bus, even in-process (TIP-008)
-- **Component Naming** → Pico actor (pure func), Nano actor (stateful), Micro actor (service) — never just "Service" (TIP-005)
-- **Execution Mechanics** → extract retry, timeout, fallback into named policies (TIP-006)
-- **Crystallization Radius** → each component max 7 files to understand (TIP-003)
-- **Dead Wrappers** → if A→B→C and B adds no value, call A→C directly (TIP-004)
+- Apply AIOA TIPs directly to the specification. For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md).
 
 ### Step 3: Generate Specification
 

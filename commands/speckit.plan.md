@@ -7,7 +7,7 @@ scripts:
 # speckit.plan — AIOA Plan Command
 
 **Preset:** aioa (version 1.0.0)
-**Reference:** [AIOA.md](../docs/AIOA.md) — Technical Implementation Patterns (TIP-002-TIP-008)
+**Reference:** [AIOA.md](../docs/AIOA.md) — Technical Implementation Patterns
 
 ---
 
@@ -21,13 +21,7 @@ Read the spec and extract AIOA compliance context. Verify spec references AIOA.m
 
 For each ADR, apply AIOA directly to the decision — NO separate AIOA compliance section:
 
-- **Decision contracts** are ADTO (TIP-007)
-- **Cross-component integration** is event-driven (TIP-008)
-- **Component levels** are declared: Pico/Nano/Micro (TIP-005)
-- **Crystallization Radius** is bounded — max 7 files per component (TIP-003)
-- **No dead abstraction** — single-use components are inlined (TIP-004)
-- **Execution mechanics** are extracted into policies, not inline (TIP-006)
-- **Domain types** are value objects, not primitives (TIP-002)
+- Apply AIOA TIPs directly to each decision. For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md).
 
 ### Step 3: Define Component Boundaries
 
@@ -39,11 +33,11 @@ For each component, document boundaries and verify against AIOA.md TIPs:
 
 ### Step 4: Map Context Flow
 
-Show how context flows through the system. Identify context accumulation hotspots and verify against AIOA.md TIP-003 (no single-file bottlenecks).
+Show how context flows through the system. Identify context accumulation hotspots and verify against AIOA.md.
 
 ### Step 5: Establish Integrity Checkpoints
 
-For each boundary, define verification gates. Reference AIOA.md for TIP-007 (typed, auditable boundaries).
+For each boundary, define verification gates. Reference AIOA.md for typed, auditable boundaries.
 
 ### Step 6: Generate Plan
 

@@ -50,4 +50,9 @@ provides:
       file: "commands/speckit.tasks.md"
       description: "Break down into tasks with AIOA rules"
       strategy: "append"
+    - type: "command"
+      name: "speckit.code-review"
+      file: "commands/speckit.code-review.md"
+      description: "Review generated source code against AIOA TIPs"
+      strategy: "append"
 
