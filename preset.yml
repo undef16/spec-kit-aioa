@@ -54,5 +54,4 @@ provides:
       name: "speckit.code-review"
       file: "commands/speckit.code-review.md"
       description: "Review generated source code against AIOA TIPs"
-      strategy: "append"
 

@@ -14,6 +14,14 @@ description: "Post-implementation code review — scans generated source files a
 
 Scan the project directory recursively for source files. Use the project's configured language patterns (e.g., glob patterns for source extensions). Skip build artifacts, dependencies, and generated directories.
 
+### Step 1.5: Load Language-Specific Examples
+
+Detect the project's primary language and load the corresponding examples directory:
+- **Python**: `docs/py_examples/` — reference implementations for all TIPs
+- **Other languages**: `docs/<language>_examples/` — equivalent TIP demonstrations
+
+Use these as concrete reference during code review. Compare implementation patterns, naming conventions, and structural choices against the examples.
+
 ### Step 2: Run TIP Checks Against Source Code
 
 1. Read `docs/AIOA.md` to extract all TIP definitions, patterns, anti-patterns, and detection categories

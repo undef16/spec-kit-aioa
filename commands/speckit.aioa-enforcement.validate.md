@@ -22,6 +22,14 @@ Scan the entire project directory recursively. Find ALL `*.md` files:
 
 Do NOT hardcode a file list — discover all `.md` files dynamically.
 
+### Step 1.5: Load Language-Specific Examples
+
+Detect the project's primary language and load the corresponding examples directory:
+- **Python**: `docs/py_examples/` — contains working TIP implementations (`adto.py`, `event_bus.py`, `events.py`, `fee_policy.py`, `identifiers.py`)
+- **Other languages**: `docs/<language>_examples/` — equivalent implementations following the same file-per-TIP structure
+
+Use these examples as ground truth when validating TIP compliance. Compare the project's implementation patterns against the reference examples.
+
 ### Step 2: Run TIP Checks
 
 1. Read `docs/AIOA.md` to extract all TIP definitions, patterns, anti-patterns, and detection categories

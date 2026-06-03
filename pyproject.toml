@@ -1,0 +1,3 @@
+[tool.pytest.ini_options]
+testpaths = ["docs/py_examples/tests"]
+pythonpath = ["docs/py_examples"]

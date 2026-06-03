@@ -250,8 +250,25 @@ spec-kit-aioa-preset/
 │   ├── speckit.plan.md                 # Plan command with AIOA TIP guidance
 │   └── speckit.tasks.md                # Tasks command with AIOA TIP guidance
 └── docs/                               # AIOA reference documentation
-    └── AIOA.md                          # Technical Implementation Patterns — single source of truth for TIP-002-TIP-008
+    ├── AIOA.md                          # Technical Implementation Patterns — single source of truth for TIP-002-TIP-008
+    └── py_examples/                     # Python reference implementations of all TIPs
+        ├── adto.py                      # TIP-007: Auditable Data Transfer Object base class
+        ├── event_bus.py                 # TIP-008: In-memory typed event bus
+        ├── events.py                    # TIP-007+TIP-008: Event types as ADTOs
+        ├── fee_policy.py                # TIP-006: Strategy pattern for fee calculation
+        ├── identifiers.py               # TIP-002: Typed domain identifier wrappers
+        └── tests/                       # Comprehensive test suite (75+ tests)
 ```
+
+### Language-Specific Examples
+
+The `docs/` directory contains language-specific example implementations:
+
+| Directory | Language | Description |
+|-----------|----------|-------------|
+| `docs/py_examples/` | Python | Full TIP implementations with tests |
+
+For other languages, create `docs/<language>_examples/` following the same file-per-TIP structure.
 
 ### Extension Structure
 

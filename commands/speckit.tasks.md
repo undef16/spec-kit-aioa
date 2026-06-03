@@ -28,6 +28,14 @@ Every task embodies AIOA from the start — no separate checklist:
 
 - Apply AIOA TIPs directly to each task. For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md).
 
+### Step 2.5: Reference Language-Specific Examples
+
+When generating tasks, reference the appropriate language examples directory:
+- **Python stack**: Point to `docs/py_examples/` — contains working implementations of ADTO (`adto.py`), event bus (`event_bus.py`), fee policies (`fee_policy.py`), typed identifiers (`identifiers.py`), and event types (`events.py`). Each file maps 1:1 to a single TIP.
+- **Other languages**: Create `docs/<language>_examples/` following the same file-per-TIP structure. Examples must demonstrate the same patterns: ADTO with audit trail, typed event bus, policy strategy pattern, domain identifier wrappers.
+
+Use these examples as concrete reference when writing task descriptions — tasks should reference specific example files to guide implementation.
+
 ### Step 3: Decompose into Tasks
 
 For each plan step, create tasks with AIOA annotations. Each task must reference AIOA.md for applicable TIPs.

@@ -1,0 +1,12 @@
+[project]
+name = "aioa-py-examples"
+version = "1.0.0"
+description = "Python examples implementing AIOA TIPs"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "pydantic>=2.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
