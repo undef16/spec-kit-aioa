@@ -116,6 +116,22 @@ class BillingService       // actually: microservice with DB, queue, API
 // AI cannot distinguish simple functions from complex subsystems
 ```
 
+#### Extraction Rule
+
+The Quantum Spectrum follows a simple principle:
+
+**Start large. Extract downward only when reuse pressure appears.**
+
+Workflow:
+
+**Step 1:** Implement new behavior inside the parent Micro Actor.
+
+**Step 2:** If business behavior becomes reusable, extract it into a Nano Actor.
+
+**Step 3:** If deterministic technical behavior becomes reusable, extract it into a Pico Actor.
+
+This prevents premature abstraction while preserving future flexibility.
+
 ### TIP-006: Declarative Straight-Line Code
 Business logic mixed with execution mechanics (retry, fallback, timeouts) creating deep nesting.
 **Pattern:** Execution mechanics extracted into separate abstractions (RetryPolicy, TimeoutPolicy). Business code stays linear and declarative.
