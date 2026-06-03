@@ -11,6 +11,7 @@ Concrete implementations of AIOA TIPs in Python 3.10+.
 | `adto.py` | TIP-007 | ADTO: Auditable Data Transfer Object (with deep-copy history and field validation) |
 | `events.py` | TIP-007 + TIP-008 | Event types as ADTO subclasses (trace_id, timestamp, audit trail) |
 | `event_bus.py` | TIP-008 | In-process event bus with typed dispatch and error isolation |
+| `pipeline_builder.py` | TIP-008 | PipelineBuilder: declarative handler binding with auto-publish and wiring |
 | `trading_events.py` | TIP-007 | Re-export of event types for backward compatibility |
 | `identifiers.py` | TIP-002 | Typed wrappers for domain identifiers (UserId, OrderId, TrialId) |
 | `fee_policy.py` | TIP-006 | Strategy pattern + ADTO-typed boundary data (FeeQuote) |

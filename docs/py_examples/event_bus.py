@@ -12,6 +12,7 @@ must not break the publisher or other subscribers.
 from __future__ import annotations
 
 import logging
+import sys
 from typing import Callable
 
 from events import Event
@@ -40,12 +41,34 @@ class InMemoryEventBus:
           prevent the others from receiving the event.
         - This bus is not thread-safe; wrap with locks if sharing across
           threads.
+        - Pass debug_trace=True to print event flow to stderr.
+        - Subscribe, unsubscribe, and publish actions are traced when
+          debug_trace is enabled.
+        - The trace is designed for development debugging, not production
+          logging.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, debug_trace: bool = False) -> None:
         # Plain dict (not defaultdict) so that `len(bus._handlers)` reflects
         # only types that have been subscribed to.
         self._handlers: dict[type, list[Handler]] = {}
+        self._debug_trace = debug_trace
+
+    @staticmethod
+    def _truncate_long_lists(obj: object, max_visible: int = 3) -> object:
+        """Truncate long lists in trace output for readability."""
+        if isinstance(obj, list) and len(obj) > max_visible:
+            return obj[:max_visible] + [f"... ({len(obj) - max_visible} more)"]
+        return obj
+
+    def _trace(self, action: str, **kwargs: object) -> None:
+        """Print formatted trace info to stderr when debug_trace is enabled."""
+        if not self._debug_trace:
+            return
+        parts = [f"[EventBus] {action}"]
+        for key, value in kwargs.items():
+            parts.append(f"{key}={self._truncate_long_lists(value)}")
+        print(" | ".join(parts), file=sys.stderr)
 
     def subscribe(self, event_type: type, handler: Handler) -> None:
         """Register a handler for a specific event type.
@@ -55,6 +78,7 @@ class InMemoryEventBus:
                 subclass of Event (or a duck-typed equivalent).
             handler: Callable invoked with the event when published.
         """
+        self._trace("SUBSCRIBE", event_type=event_type.__name__, handler=handler)
         self._handlers.setdefault(event_type, []).append(handler)
 
     def unsubscribe(self, event_type: type, handler: Handler) -> None:
@@ -68,6 +92,7 @@ class InMemoryEventBus:
             handler: The handler object to remove. A no-op if the handler
                 was not registered.
         """
+        self._trace("UNSUBSCRIBE", event_type=event_type.__name__, handler=handler)
         handlers = self._handlers.get(event_type)
         if handlers is None:
             return
@@ -81,7 +106,9 @@ class InMemoryEventBus:
         contract of an event bus — a subscriber failure must not
         propagate to the publisher.
         """
-        for handler in list(self._handlers.get(type(event), [])):
+        handlers = list(self._handlers.get(type(event), []))
+        self._trace("PUBLISH", event=type(event).__name__, handlers=len(handlers))
+        for handler in handlers:
             try:
                 handler(event)
             except Exception:

@@ -326,6 +326,73 @@ All events are valid. What is forbidden is direct method calls between actors.
 
 ADTO (TIP-007) makes event-driven workflows transparent: each event carries a typed, auditable payload. This allows tracking all state transitions, understanding process chains, and finding bugs by reading the event history without reading actor internals.
 
+#### Concrete Implementation Patterns
+
+##### Pattern 1: Event-as-ADTO Pattern
+
+Events inherit from ADTO (TIP-007), making them first-class data objects with full provenance:
+
+* mutation audit trail via PropertyChange and TraceEntry;
+* caller detection on every mutation;
+* `extra="forbid"` prevents accidental fields;
+* baked-in `trace_id: UUID` and `timestamp: datetime`.
+
+```text
+class PaymentRequested(ADTO):
+    order_id: UUID
+    amount: Decimal
+    currency: str
+    # trace_id and timestamp come from ADTO
+    # extra="forbid" is inherited
+    # every mutation writes a TraceEntry
+```
+
+##### Pattern 2: Declarative Handler Binding
+
+The `@handler` decorator declares what a handler consumes and produces:
+
+```text
+@handler(OrderPlaced, InventoryReserved)
+def reserve_inventory(event: OrderPlaced) -> InventoryReserved:
+    ...
+```
+
+The PipelineBuilder introspects these decorators to wire actors to the bus automatically. Type annotations are validated against the declared input type — mismatches are caught at wiring time, not at runtime.
+
+##### Pattern 3: Handler Auto-Publish
+
+When a handler returns a value, the PipelineBuilder wraps it so the return is automatically published to the bus:
+
+```text
+@handler(OrderPlaced, InventoryReserved)
+def reserve_inventory(event: OrderPlaced) -> InventoryReserved:
+    return InventoryReserved(order_id=event.order_id)
+```
+
+If the handler returns a list, each item is published individually. This eliminates the boilerplate of manual publish calls inside every handler.
+
+##### Pattern 4: Pipeline Wiring
+
+PipelineBuilder.build(actors, bus) iterates actors, finds @handler-decorated methods, and subscribes each to the bus based on its declared input type:
+
+```text
+bus = InMemoryEventBus()
+pipeline = PipelineBuilder.build([checkout_actor, inventory_actor, notification_actor], bus)
+```
+
+Actor order in the list determines registration order. The bus becomes a pure routing layer — it does not know which handlers exist until wiring.
+
+##### Pattern 5: Error Isolation with Continuation
+
+When a handler raises, the error is logged but other handlers for the same event type continue executing:
+
+```text
+# both handle OrderPlaced
+# if inventory_actor raises, notification_actor still runs
+```
+
+One failed handler does not crash the pipeline. The bus logs the failure and continues dispatching to the remaining subscribers.
+
 ### Anti-Patterns by Principle
 
 The principles below are universal. Each is shown with a pseudo-code example. The linter under each language encodes the detection.
