@@ -54,7 +54,7 @@ Group tasks sharing 50%+ of context files consecutively.
 1. Tasks sharing 50%+ context files should be consecutive
 2. Tasks in same component boundary should be grouped
 3. Tasks crossing multiple boundaries need context refresh before
-4. Tasks with state tracking adjacent to their state changes
+4. Tasks with data mutations adjacent to their ADTO definitions
 
 ### Step 5: Generate AIOA-Native Tasks
 
@@ -74,7 +74,7 @@ Each task embodies AIOA — no separate compliance validation.
 Tasks must not encode deployment assumptions. See AIOA.md for architectural independence rules.
 
 ### Rule 4: State Provenance Must Be Planned
-Every stateful task needs ADTO provisions. See AIOA.md for ADTO requirements.
+If a task needs state, use ADTO provisions for audit trail. See AIOA.md for ADTO requirements. Prefer stateless by default.
 
 ### Rule 5: Group Related Tasks
 Tasks within same component should be sequential to minimize context reloading.

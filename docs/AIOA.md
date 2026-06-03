@@ -100,12 +100,12 @@ The pattern is universal: a layer whose sole purpose is to forward to another la
 
 ### TIP-005: Quantum Spectrum
 Components at different abstraction levels are indistinguishable by name — everything is called "service" despite different complexity.
-**Pattern:** Pico Actor — deterministic pure function, Nano Actor — component with state, Micro Actor — independent service. Different levels, different names.
+**Pattern:** Pico Actor — deterministic primitive, Nano Actor — reusable business workflow, Micro Actor — primary business boundary. Different levels, different names. Prefer stateless — ADTO (TIP-007) handles state when needed.
 ```text
 // Pattern: named by level
-pico actor FormatPostalCode(input: string): string
-nano actor ApplyDiscount(order, customer): Order
-micro actor BillingService: manages invoices, payments
+pico actor FormatPostalCode(input: string): string     // deterministic primitive
+nano actor ApplyDiscount(order, customer): Order        // reusable business workflow
+micro actor BillingService: manages invoices, payments   // primary business boundary
 ```
 **Anti-Pattern:** Everything called "Service" regardless of whether it is a pure function or a distributed microservice.
 ```text
@@ -266,7 +266,7 @@ pico actor ValidateAddress(addr: RawAddress):
     // validate logic
     bus.publish(AddressValidated(address, valid))
 
-// Nano actor (stateful component) subscribes and publishes
+// Nano actor (shared functionality) subscribes and publishes
 nano actor ShippingManager:
     bus.subscribe<AddressValidated>(onAddressValidated)
     function onAddressValidated(event):
