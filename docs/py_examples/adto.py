@@ -76,7 +76,7 @@ class ADTO(BaseModel):
         print(user.mutation_history())
     """
 
-    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+    model_config = ConfigDict(extra="forbid")
 
     def __init__(self, **kwargs: Any) -> None:
         # Pop adto_trace_enabled from kwargs (pydantic must not receive it).
