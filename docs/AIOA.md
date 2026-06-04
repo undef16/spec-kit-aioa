@@ -1,12 +1,12 @@
-# AIOA — AI-Oriented Architecture
+# AIOA - AI-Oriented Architecture
 
-> AIOA does not replace existing architectures. AIOA is a **refinement** for AI coding assistants (Claude Code, Copilot, Cursor) that read, review, and modify your codebase. Each TIP answers: "how would an AI engineer see this code for the first time and safely change it?"
+> AIOA ≠ replacement for existing architectures. AIOA **refines** architecture for AI coding assistants (Claude Code, Copilot, Cursor). Each TIP answers: "How AI engineer sees code first time? How to change safely?"
 
 ## Technical Implementation Patterns (TIPs)
 
 ### TIP-002: Semantic Collision
-The same name or type for different concepts — an AI agent cannot distinguish entities without deep context.
-**Pattern:** Each entity has its own type, even if technically the same primitive structure. `UserId` and `PaymentId` are distinct types.
+Same name or type for different concepts. AI agent cannot distinguish entities without deep context.
+**Pattern:** Each entity owns distinct type, even if same primitive structure underneath. `UserId` and `PaymentId` - different types.
 ```text
 // Pattern: distinct types for distinct concepts
 type UserId = string    // "usr_xxx"
@@ -15,7 +15,7 @@ type PaymentId = string // "pay_xxx"
 function getUser(id: UserId): User
 function getPayment(id: PaymentId): Payment
 ```
-**Anti-Pattern:** All identifiers are `str`. AI cannot tell `user_id` from `payment_id` without reading the entire call chain.
+**Anti-Pattern:** All identifiers = `str`. AI cannot distinguish `user_id` from `payment_id` without reading full call chain.
 ```text
 // Anti-Pattern: everything is string
 function getUser(id: string): User
@@ -25,15 +25,15 @@ function getPayment(id: string): Payment
 
 #### Domain Identifier Rule
 
-A field representing a domain identifier (user ID, order ID, strategy name, etc.) must use a value type, not a primitive. This applies even when all IDs are structurally the same primitive.
+Field representing domain identifier (user ID, order ID, strategy name, etc.) must use value type. NOT primitive. Applies even when all IDs structurally same primitive.
 
-The value type must:
-1. Be distinct from the underlying primitive (so accidental interchange is prevented by the type system)
-2. Optionally validate the value at construction (e.g., "this strategy name is registered")
+Value type must:
+1. Be distinct from underlying primitive - type system prevents accidental interchange
+2. Optionally validate value at construction (e.g. 'this strategy name is registered')
 
-Pseudo example — the wrapper type delegates to a primitive but is typed as a distinct concept:
+Pseudo example - wrapper type delegates to primitive but typed as distinct concept:
 ```text
-// Pseudo — domain identifier as a value type
+// Pseudo - domain identifier as a value type
 type UserId wraps string      // distinct from primitive
 type OrderId wraps string     // compiler prevents accidental interchange
 
@@ -41,11 +41,11 @@ function createUser(id: UserId): User
 // createUser(orderId)  ← compiler error, type mismatch
 ```
 
-The mechanism is per-language. The principle is universal.
+Mechanism per-language. Principle universal.
 
 ### TIP-003: Repository Search Bottleneck
-A single file or module becomes a bottleneck — AI must read it to understand anything in the system.
-**Pattern:** Responsibility distributed across narrow, specialized modules. Each module solves one task.
+Single file or module becomes bottleneck. AI must read it to understand anything in system.
+**Pattern:** Responsibility distributed across narrow specialized modules. Each module solves one task.
 ```text
 // Pattern: narrow modules, single responsibility
 import payment/
@@ -53,61 +53,61 @@ import billing/
 import notification/
 // AI reads only payment/ to understand payment logic
 ```
-**Anti-Pattern:** A 2000-line `utils.py` imported by half the codebase. AI reads it entirely for any change.
+**Anti-Pattern:** 2000-line `utils.py` imported by half codebase. AI reads entire file for any change.
 ```text
 // Anti-Pattern: everything in one file
 from utils import *         // 2000 lines, 50 unrelated functions
-// AI must read all 2000 lines — cannot know what's needed
+// AI must read all 2000 lines - cannot know what's needed
 ```
 
 ### TIP-004: Code Crystallization
-A chain of wrappers where each element only forwards control without adding value.
-**Pattern:** Direct A→C call when intermediate B adds no transformation or validation.
+Chain of wrappers. Each element forwards control. Zero value added.
+**Pattern:** Direct A→C call. Intermediate B adds nothing - no transformation, no validation.
 ```text
 // Pattern: call directly
 class PaymentProcessor:
     function charge(amount):
         return Gateway.charge(amount)  // direct call
 ```
-**Anti-Pattern:** A→Router→Handler→Service→Repository where every step is forwarding without logic.
+**Anti-Pattern:** A→Router→Handler→Service→Repository. Every step forwards. Zero logic.
 ```text
 // Anti-Pattern: dead indirection chain
 PaymentController → PaymentRouter → PaymentHandler
     → PaymentService → PaymentRepository → Gateway
-// each layer just forwards — zero value added
+// each layer just forwards - zero value added
 // AI must read ALL 5 files to understand "charge"
 ```
 
 #### Pass-Through Wrapping Rule
 
-A function, method, or class that exists only to invoke another function, method, or class with the same signature is a pass-through. It adds no value and should be removed.
+Function, method, or class existing only to invoke another with same signature = pass-through. Adds zero value. Remove.
 
-Pass-throughs are allowed only if they provide at least one of:
+Pass-throughs allowed ONLY if providing at least one of:
 1. Validation or invariant enforcement
 2. Logging or telemetry
 3. Meaningful signature transformation
-4. Acts as a documented public API boundary, with the inner function being internal
+4. Acts as documented public API boundary - inner function internal
 
-If none of (1)–(4) apply, the caller should invoke the inner function directly. The wrapper is dead indirection and an anti-pattern of TIP-004.
+If none of (1)–(4) apply, caller invokes inner function directly. Wrapper = dead indirection. Anti-pattern of TIP-004.
 
-This rule applies to:
-- Functions that call other functions with identical signatures
-- Wrapper classes that only forward to an inner class
-- Re-exports under a different name without transformation
-- Files containing only a docstring-redirector and no executable code
+Rule applies to:
+- Functions calling other functions with identical signatures
+- Wrapper classes forwarding to inner class only
+- Re-exports under different name without transformation
+- Files containing docstring-redirector only - no executable code
 
-The pattern is universal: a layer whose sole purpose is to forward to another layer, regardless of the language mechanism used to implement it.
+Pattern universal: layer whose sole purpose = forward to another layer. Language mechanism irrelevant.
 
 ### TIP-005: Quantum Spectrum
-Components at different abstraction levels are indistinguishable by name — everything is called "service" despite different complexity.
-**Pattern:** Pico Actor — deterministic primitive, Nano Actor — reusable business workflow, Micro Actor — primary business boundary. Different levels, different names. Prefer stateless — ADTO (TIP-007) handles state when needed.
+Components at different abstraction levels indistinguishable by name. Everything called 'service' despite different complexity.
+**Pattern:** Pico Actor - deterministic primitive. Nano Actor - reusable business workflow. Micro Actor - primary business boundary. Different levels. Different names. Prefer stateless - ADTO (TIP-007) handles state when needed.
 ```text
 // Pattern: named by level
 pico actor FormatPostalCode(input: string): string     // deterministic primitive
 nano actor ApplyDiscount(order, customer): Order        // reusable business workflow
 micro actor BillingService: manages invoices, payments   // primary business boundary
 ```
-**Anti-Pattern:** Everything called "Service" regardless of whether it is a pure function or a distributed microservice.
+**Anti-Pattern:** Everything called 'Service' - pure function OR distributed microservice. No distinction.
 ```text
 // Anti-Pattern: everything is "Service"
 class FormatService        // actually: formatPostalCode(a, b): string
@@ -118,23 +118,23 @@ class BillingService       // actually: microservice with DB, queue, API
 
 #### Extraction Rule
 
-The Quantum Spectrum follows a simple principle:
+Quantum Spectrum follows simple principle:
 
 **Start large. Extract downward only when reuse pressure appears.**
 
 Workflow:
 
-**Step 1:** Implement new behavior inside the parent Micro Actor.
+**Step 1:** Implement new behavior inside parent Micro Actor.
 
-**Step 2:** If business behavior becomes reusable, extract it into a Nano Actor.
+**Step 2:** Business behavior reusable? Extract into Nano Actor.
 
-**Step 3:** If deterministic technical behavior becomes reusable, extract it into a Pico Actor.
+**Step 3:** Deterministic technical behavior reusable? Extract into Pico Actor.
 
-This prevents premature abstraction while preserving future flexibility.
+Prevents premature abstraction. Preserves future flexibility.
 
 ### TIP-006: Declarative Straight-Line Code
-Business logic mixed with execution mechanics (retry, fallback, timeouts) creating deep nesting.
-**Pattern:** Execution mechanics extracted into separate abstractions (RetryPolicy, TimeoutPolicy). Business code stays linear and declarative.
+Business logic mixed with execution mechanics (retry, fallback, timeout). Creates deep nesting.
+**Pattern:** Execution mechanics extracted into separate abstractions (RetryPolicy, TimeoutPolicy). Business code - linear, declarative.
 ```text
 // Pattern: retry policy extracted with ADTO config
 struct RetryConfig(ADTO):
@@ -145,9 +145,9 @@ retryPolicy = RetryPolicy(config=RetryConfig(maxAttempts=3, backoff="exponential
 
 function chargeCustomer(amount):
     return retryPolicy.execute(() => gateway.charge(amount))
-// business logic is ONE line — retry mechanic is abstracted
+// business logic is ONE line - retry mechanic is abstracted
 ```
-**Anti-Pattern:** try/except/retry boilerplate repeated in every function. Business logic buried under three levels of error handling.
+**Anti-Pattern:** try/except/retry boilerplate repeated in every function. Business logic buried under 3 levels of error handling.
 ```text
 // Anti-Pattern: hand-written retry in every function
 function chargeCustomer(amount):
@@ -157,25 +157,25 @@ function chargeCustomer(amount):
         except NetworkError:
             if attempt == 3: throw
             sleep(2^attempt)
-// business logic hidden inside error handling — AI reads 10 lines for 1 intent
+// business logic hidden inside error handling - AI reads 10 lines for 1 intent
 ```
 
 ### TIP-007: Auditable Data Transfer Objects (ADTO)
-Data crossing boundaries must be typed AND auditable. ADTO combines strict type safety with automatic mutation history.
+Data crossing boundaries must be typed AND auditable. ADTO combines strict type safety + automatic mutation history.
 
 #### ADTO Contract (language-agnostic)
 
-An object claimed to be an ADTO must satisfy three requirements, independent of language or implementation:
+Object claiming ADTO status must satisfy 3 requirements. Language-independent:
 
-1. **Immutability** — the object's state cannot be modified after construction by any means available in the host language (frozen data classes, readonly fields, immutable interfaces, persistent data structures, etc.). The mechanism is per-language; the requirement is universal.
-2. **Auditability** — the object must provide:
-   - A method to record a state transition (operation name, reason, before-value, after-value)
-   - A method to retrieve the history of transitions as an ordered sequence
-3. **Optional provenance** — the object may record which class/method created it, for end-to-end traceability.
+1. **Immutability** - object state cannot mutate after construction. By any means available in host language (frozen data classes, readonly fields, immutable interfaces, persistent data structures, etc.). Mechanism per-language. Requirement universal.
+2. **Auditability** - object must provide:
+   - Method to record state transition (operation name, reason, before-value, after-value)
+   - Method to retrieve transition history as ordered sequence
+3. **Optional provenance** - object may record which class/method created it. End-to-end traceability.
 
-The contract is universal. The mechanism (framework, base class, code generation, annotation, etc.) is per-language and is the implementer's choice.
+Contract universal. Mechanism (framework, base class, code generation, annotation, etc.) per-language. Implementer's choice.
 
-**Pattern:** Every boundary-crossing object satisfies the ADTO contract. The mechanism is per-language.
+**Pattern:** Every boundary-crossing object satisfies ADTO contract. Mechanism per-language.
 ```text
 // Pattern: typed boundary data with audit trail
 // ADTO Contract: immutable, auditable, optionally traceable
@@ -244,7 +244,7 @@ abstract class ADTO {
     }
 }
 ```
-**Anti-Pattern:** Raw `dict` crossing boundaries, or manual `_provenance` field. AI must read implementation to understand structure; provenance is forgotten or incomplete.
+**Anti-Pattern:** Raw `dict` crossing boundaries. Or manual `_provenance` field. AI must read implementation to understand structure. Provenance forgotten or incomplete.
 ```text
 // Anti-Pattern: raw dict + manual provenance
 function createOrder(data: dict) -> dict:
@@ -253,17 +253,17 @@ function createOrder(data: dict) -> dict:
     return {"status": "ok", "order_id": id}
 
 class Order:
-    _provenance: list  // manually maintained — forgotten, wrong, incomplete
+    _provenance: list  // manually maintained - forgotten, wrong, incomplete
 ```
 
 ### TIP-008: Event-Driven Integration
-Components coupled through direct calls, creating tight coupling.
-**Pattern:** All cross-actor communication goes through an event bus. Choose ONE event bus mechanism — the technology choice is an implementation decision, not an architectural pattern. By default, use an in-process InMemoryEventBus (zero infrastructure). If RabbitMQ, Kafka, or another broker is already present, use it directly — do NOT add a second bus. Pico actors, Nano actors, and Micro actors must never talk directly to each other.
+Components coupled through direct calls. Creates tight coupling.
+**Pattern:** All cross-actor communication through event bus. Choose ONE event bus mechanism. Technology choice = implementation decision. NOT architectural pattern. Default: in-process InMemoryEventBus (zero infrastructure). RabbitMQ/Kafka/other broker already present? Use it directly. Do NOT add second bus. Pico actors, Nano actors, Micro actors must NEVER talk directly.
 ```text
 // Rule: ALL cross-actor communication via event bus
 // Choose ONE mechanism. Default: InMemoryEventBus. If RabbitMQ already present, use that.
 
-// In-memory event bus — simple publish/subscribe within process
+// In-memory event bus - simple publish/subscribe within process
 class InMemoryEventBus:
     handlers = Map<Type, List<Handler>>()
 
@@ -298,9 +298,9 @@ micro actor LogisticsService:
         // call external logistics API
 ```
 
-**Key rule:** The event bus technology is an implementation decision, not an architectural pattern. By default, use InMemoryEventBus (zero infrastructure). If RabbitMQ/Kafka is already present in the deployment, components emit events to it directly — no second bus needed. The choice stays within the same component boundary.
+**Key rule:** Event bus technology = implementation decision. NOT architectural pattern. Default: InMemoryEventBus (zero infrastructure). RabbitMQ/Kafka already present in deployment? Components emit events to it directly. No second bus needed. Choice stays within same component boundary.
 
-**Anti-Pattern:** `ComponentA` calls `B.internal_method()` directly. Coupling grows — changing one component requires changing the other.
+**Anti-Pattern:** `ComponentA` calls `B.internal_method()` directly. Coupling grows. Changing one component requires changing other.
 ```text
 // Anti-Pattern: direct call to actor internal method
 class OrderService:
@@ -314,23 +314,23 @@ class OrderService:
 
 #### Event Choreography
 
-A workflow satisfies choreography-only when it has all three properties:
+Workflow satisfies choreography-only when holding all 3 properties:
 
-1. The Pico entry point emits a single command event and exits. It does not invoke any other actor's methods.
-2. Each actor subscribes to one or more events. An actor's method invocations target only its own dependencies, never another actor.
-3. State transitions are observable as event emissions. No state transition is implemented as a direct call from one actor to another.
+1. Pico entry point emits single command event and exits. Does NOT invoke any other actor's methods.
+2. Each actor subscribes to one or more events. Actor's method invocations target only own dependencies. Never another actor.
+3. State transitions observable as event emissions. No state transition implemented as direct call between actors.
 
-A workflow violates this rule as soon as an actor invokes a method on another actor. The presence of an "Orchestrator", "Coordinator", or "Controller" that drives the workflow is a strong signal of violation, but the rule itself is structural (look at call sites) and does not depend on naming.
+Workflow violates rule as soon as actor invokes method on another actor. Presence of "Orchestrator", "Coordinator", or "Controller" driving workflow = strong violation signal. But rule itself is structural (look at call sites). Does not depend on naming.
 
-All events are valid. What is forbidden is direct method calls between actors.
+All events valid. Forbidden: direct method calls between actors.
 
-ADTO (TIP-007) makes event-driven workflows transparent: each event carries a typed, auditable payload. This allows tracking all state transitions, understanding process chains, and finding bugs by reading the event history without reading actor internals.
+ADTO (TIP-007) makes event-driven workflows transparent: each event carries typed, auditable payload. Allows tracking all state transitions, understanding process chains, finding bugs by reading event history without reading actor internals.
 
 #### Concrete Implementation Patterns
 
 ##### Pattern 1: Event-as-ADTO Pattern
 
-Events inherit from ADTO (TIP-007), making them first-class data objects with full provenance:
+Events inherit from ADTO (TIP-007). First-class data objects with full provenance:
 
 * mutation audit trail via PropertyChange and TraceEntry;
 * caller detection on every mutation;
@@ -349,7 +349,7 @@ class PaymentRequested(ADTO):
 
 ##### Pattern 2: Declarative Handler Binding
 
-The `@handler` decorator declares what a handler consumes and produces:
+`@handler` decorator declares what handler consumes and produces:
 
 ```text
 @handler(OrderPlaced, InventoryReserved)
@@ -357,11 +357,11 @@ def reserve_inventory(event: OrderPlaced) -> InventoryReserved:
     ...
 ```
 
-The PipelineBuilder introspects these decorators to wire actors to the bus automatically. Type annotations are validated against the declared input type — mismatches are caught at wiring time, not at runtime.
+PipelineBuilder introspects these decorators to wire actors to bus automatically. Type annotations validated against declared input type. Mismatches caught at wiring time. NOT at runtime.
 
 ##### Pattern 3: Handler Auto-Publish
 
-When a handler returns a value, the PipelineBuilder wraps it so the return is automatically published to the bus:
+Handler returns value? PipelineBuilder wraps it. Return automatically published to bus:
 
 ```text
 @handler(OrderPlaced, InventoryReserved)
@@ -369,63 +369,63 @@ def reserve_inventory(event: OrderPlaced) -> InventoryReserved:
     return InventoryReserved(order_id=event.order_id)
 ```
 
-If the handler returns a list, each item is published individually. This eliminates the boilerplate of manual publish calls inside every handler.
+Handler returns list? Each item published individually. Eliminates boilerplate of manual publish calls inside every handler.
 
 ##### Pattern 4: Pipeline Wiring
 
-PipelineBuilder.build(actors, bus) iterates actors, finds @handler-decorated methods, and subscribes each to the bus based on its declared input type:
+PipelineBuilder.build(actors, bus) iterates actors. Finds @handler-decorated methods. Subscribes each to bus based on declared input type:
 
 ```text
 bus = InMemoryEventBus()
 pipeline = PipelineBuilder.build([checkout_actor, inventory_actor, notification_actor], bus)
 ```
 
-Actor order in the list determines registration order. The bus becomes a pure routing layer — it does not know which handlers exist until wiring.
+Actor order in list determines registration order. Bus becomes pure routing layer. Does not know which handlers exist until wiring.
 
 ##### Pattern 5: Error Isolation with Continuation
 
-When a handler raises, the error is logged but other handlers for the same event type continue executing:
+Handler raises? Error logged. Other handlers for same event type continue executing:
 
 ```text
 # both handle OrderPlaced
 # if inventory_actor raises, notification_actor still runs
 ```
 
-One failed handler does not crash the pipeline. The bus logs the failure and continues dispatching to the remaining subscribers.
+One failed handler does not crash pipeline. Bus logs failure. Continues dispatching to remaining subscribers.
 
 ### Anti-Patterns by Principle
 
-The principles below are universal. Each is shown with a pseudo-code example. The linter under each language encodes the detection.
+Principles below universal. Each shown with pseudo-code example. Linter under each language encodes detection.
 
 ---
 
-**TIP-002 — Untyped IDs**
+**TIP-002 - Untyped IDs**
 
-A domain identifier is a concept, not a primitive. Its type must be distinct from the primitive it wraps, so the type system can prevent accidental interchange of IDs from different concepts.
+Domain identifier = concept. NOT primitive. Its type must be distinct from primitive it wraps. Type system prevents accidental interchange of IDs from different concepts.
 
 Typical violation:
 ```text
 // Violation: domain identifier stored as a raw primitive
-type UserId = string    // bare primitive — compiler cannot distinguish
+type UserId = string    // bare primitive - compiler cannot distinguish
 type OrderId = string   // UserId and OrderId are the same type
 ```
 
 Typical fix:
 ```text
 // Fix: distinct value type wrapping the primitive
-type UserId wraps string    // distinct type — compiler catches misuse
+type UserId wraps string    // distinct type - compiler catches misuse
 type OrderId wraps string   // UserId and OrderId are different types
 ```
 
 ---
 
-**TIP-004 — Dead indirection**
+**TIP-004 - Dead indirection**
 
-A pass-through layer that adds no behavior should be removed, not reduced.
+Pass-through layer adding no behavior. Remove. Not reduce.
 
 Typical violation:
 ```text
-// Violation: wrapper that adds no behavior — pure forwarding
+// Violation: wrapper that adds no behavior - pure forwarding
 function handleRequest(data): Response {
     return inner.handleRequest(data)  // zero transformation
 }
@@ -436,21 +436,21 @@ function handleRequest(data): Response {
 
 ---
 
-**TIP-006 — Control flow in business code**
+**TIP-006 - Control flow in business code**
 
-Execution mechanics (retries, locks, logging severity, error branching) belong in policies, not in business methods.
+Execution mechanics (retries, locks, logging severity, error branching) belong in policies. NOT in business methods.
 
 Typical violations:
-- A runtime branch on environment flags for severity policy (`if dev_mode: ... else: ...` deciding between `logger.warning` and `logger.error`)
-- Nested `for/try/except/if` more than three levels deep in a single method
-- Manual retry loops inside business logic when a retry policy is available
+- Runtime branch on environment flags for severity policy (`if dev_mode: ... else: ...` deciding between `logger.warning` and `logger.error`)
+- Nested `for/try/except/if` more than 3 levels deep in single method
+- Manual retry loops inside business logic when retry policy available
 - Inline environment-flag branching for any execution concern (timeout, retry, fallback, severity)
 
 ---
 
-**TIP-007 — Untyped data crossing boundaries**
+**TIP-007 - Untyped data crossing boundaries**
 
-A data structure passing across an actor boundary must have a defined type. Generic maps defeat static analysis and force the consumer to read the producer's code to understand the data.
+Data structure passing across actor boundary must have defined type. Generic maps defeat static analysis. Force consumer to read producer's code to understand data.
 
 Typical violation:
 ```text
@@ -459,21 +459,21 @@ function process(data: Dict): Result
 // consumer must read the entire function body to understand the data shape
 ```
 
-The fix is a typed object with named fields. ADTOs without `record_mutation` / history are also a violation of the auditable half of the contract (see Section A).
+Fix: typed object with named fields. ADTOs without `record_mutation` / history = also violation of auditable half of contract (see Section A).
 
 ---
 
-**TIP-008 — Direct calls between actors**
+**TIP-008 - Direct calls between actors**
 
-An actor's method invocations target only its own dependencies. Invoking another actor's method is a structural violation, regardless of language.
+Actor's method invocations target only own dependencies. Invoking another actor's method = structural violation. Language irrelevant.
 
 Typical violations:
-- A `MicroActor.run()` method that calls `NanoActor.do_thing()` directly
-- A `pico_actor_main()` function that calls `micro_actor.run()` directly
-- An "orchestrator" / "coordinator" / "controller" class that drives the workflow through method calls
+- `MicroActor.run()` method calling `NanoActor.do_thing()` directly
+- `pico_actor_main()` function calling `micro_actor.run()` directly
+- "orchestrator" / "coordinator" / "controller" class driving workflow through method calls
 
-In all cases, the fix is the same: the caller emits a command event and exits; the callee subscribes to that event and reacts. See the Event Choreography structural rule above.
+In all cases, fix same: caller emits command event and exits. Callee subscribes to that event and reacts. See Event Choreography structural rule above.
 
 ## Usage
 
-Each template and command in this preset references AIOA.md as the single source of truth for all TIP definitions.
+Each template and command in this preset references AIOA.md as single source of truth for all TIP definitions.
