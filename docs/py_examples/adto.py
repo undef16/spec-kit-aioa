@@ -76,7 +76,7 @@ class ADTO(BaseModel):
         print(user.mutation_history())
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
     def __init__(self, **kwargs: Any) -> None:
         # Pop adto_trace_enabled from kwargs (pydantic must not receive it).
@@ -97,8 +97,7 @@ class ADTO(BaseModel):
         # use object.__setattr__ internally), explicitly record the initial
         # values so the audit trail is never empty for a constructed ADTO.
         if trace_enabled:
-            for name, value in field_kwargs.items():
-                self._on_property_changed(name, value)
+            self._on_property_changed(field_kwargs)
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Intercept public attribute sets for change tracking.
@@ -123,17 +122,17 @@ class ADTO(BaseModel):
         if name in cls.model_fields:
             self._on_property_changed(name, value)
 
-    def _on_property_changed(self, property_name: str, new_value: Any) -> None:
-        """Record a property change in the audit trail.
+    def _on_property_changed(self, changes: dict[str, Any]) -> None:
+        """Record property changes in the audit trail.
 
         Detects caller class/method from the stack trace. Falls back to a
         warning (not silent "unknown") if the frame cannot be analyzed.
         """
         caller_class, caller_method = self._detect_caller()
 
-        change = PropertyChange(
-            property_name=property_name,
-            new_value=copy.deepcopy(new_value),
+        property_changes = tuple(
+            PropertyChange(property_name=name, new_value=copy.deepcopy(value))
+            for name, value in changes.items()
         )
 
         history: list[TraceEntry] = object.__getattribute__(self, _ADTO_HISTORY)
@@ -144,21 +143,14 @@ class ADTO(BaseModel):
                 and last.caller_method == caller_method):
             # Same caller — build a new TraceEntry with the merged changes
             # (TraceEntry is frozen, so we cannot mutate in place).
-            new_changes: list[PropertyChange] = []
-            found = False
-            for c in last.changes:
-                if c.property_name == property_name:
-                    new_changes.append(change)
-                    found = True
-                else:
-                    new_changes.append(c)
-            if not found:
-                new_changes.append(change)
+            existing = {change.property_name: change for change in last.changes}
+            for property_change in property_changes:
+                existing[property_change.property_name] = property_change
             new_entry = TraceEntry(
                 timestamp=last.timestamp,
                 caller_class=last.caller_class,
                 caller_method=last.caller_method,
-                changes=tuple(new_changes),
+                changes=tuple(existing.values()),
                 snapshot=copy.deepcopy(self),
             )
             history[-1] = new_entry
@@ -167,7 +159,7 @@ class ADTO(BaseModel):
                 timestamp=datetime.now(timezone.utc),
                 caller_class=caller_class,
                 caller_method=caller_method,
-                changes=(change,),
+                changes=property_changes,
                 snapshot=copy.deepcopy(self),
             )
             history.append(entry)
@@ -175,15 +167,26 @@ class ADTO(BaseModel):
     def _detect_caller(self) -> tuple[str, str]:
         """Walk the call stack to identify the caller of __setattr__.
 
-        Returns (caller_class, caller_method). This method assumes a valid
-        call chain and uses ``frame.f_back.f_back`` directly. On CPython this
-        always works; on non-CPython implementations without frame support it
-        may raise.
+        Returns (caller_class, caller_method). Assumes a valid call chain:
+        _detect_caller <- _on_property_changed <- __setattr__/__init__
+
+        Falls back to ("<undetected>", "<unknown>") when stack frames are
+        unavailable (e.g. non-CPython implementations).
         """
         frame = inspect.currentframe()
+        if frame is None:
+            logger.warning("Cannot detect caller: no current frame available")
+            return "<undetected>", "<unknown>"
 
-        # _detect_caller ← _on_property_changed ← __setattr__/__init__
-        caller_frame = frame.f_back.f_back
+        caller_frame = frame.f_back
+        if caller_frame is None:
+            logger.warning("Cannot detect caller: no caller frame available")
+            return "<undetected>", "<unknown>"
+
+        caller_frame = caller_frame.f_back
+        if caller_frame is None:
+            logger.warning("Cannot detect caller: no grandparent frame available")
+            return "<undetected>", "<unknown>"
 
         caller_method = caller_frame.f_code.co_name
         caller_class = "<undetected>"
