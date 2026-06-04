@@ -18,6 +18,10 @@ provides:
       file: "commands/speckit.aioa-enforcement.validate.md"
       description: "Validate AIOA compliance before implementation (mandatory hook)"
       aliases: ["speckit.aioa-enforcement.check"]
+    - name: "speckit.aioa-enforcement.code-review"
+      file: "commands/speckit.aioa-enforcement.code-review.md"
+      description: "Perform AIOA code review on generated source files"
+      aliases: ["speckit.aioa-enforcement.code-review.check"]
 
 hooks:
   after_constitution:
@@ -57,6 +61,6 @@ hooks:
       scope: "implement"
 
   after_implement_code_review:
-    command: "speckit.code-review"
+    command: "speckit.aioa-enforcement.code-review"
     optional: false
     prompt: "Running AIOA code review on generated source files..."
