@@ -120,7 +120,7 @@ class ADTO(BaseModel):
             return
 
         if name in cls.model_fields:
-            self._on_property_changed(name, value)
+            self._on_property_changed({name: value})
 
     def _on_property_changed(self, changes: dict[str, Any]) -> None:
         """Record property changes in the audit trail.

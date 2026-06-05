@@ -1,479 +1,693 @@
 # AIOA - AI-Oriented Architecture
 
-> AIOA ≠ replacement for existing architectures. AIOA **refines** architecture for AI coding assistants (Claude Code, Copilot, Cursor). Each TIP answers: "How AI engineer sees code first time? How to change safely?"
+> AIOA does not replace existing architecture styles. It refines them for codebases that are read, reviewed, and modified by AI coding agents. The optimization target is simple: reduce how much context an agent must traverse before it can safely change the system.
 
-## Technical Implementation Patterns (TIPs)
+This document is the single source of truth for AIOA principles used by this Spec Kit preset.
+
+## Core Objective
+
+### Minimize Crystallization Radius
+
+**Crystallization Radius** is the amount of system context an AI agent must traverse before it can safely understand, modify, test, or verify a component.
+
+Large radius creates:
+
+- broad repository searches;
+- dependency-chain traversal;
+- excessive abstraction reading;
+- context-window inflation;
+- expensive debugging cycles;
+- higher risk of incorrect patches.
+
+Small radius creates:
+
+- local reasoning;
+- isolated modifications;
+- deterministic testing;
+- predictable retrieval;
+- lower token consumption;
+- safer code generation.
+
+Every architectural decision should be evaluated by one question:
+
+> How much additional context must an AI agent consume before making a safe change?
+
+If a decision expands the Crystallization Radius without preserving important domain meaning, it carries an operational cost.
+
+### Preserve Semantic Integrity
+
+AIOA has two constraints:
+
+1. **Minimize Crystallization Radius** - reduce traversal cost.
+2. **Preserve Semantic Integrity** - keep domain meaning explicit and protected.
+
+Reducing traversal without semantic integrity causes **Semantic Collision**: distinct business concepts collapse into the same names, primitives, or contracts.
+
+Preserving semantics without controlling traversal causes context explosion.
+
+Both constraints must evolve together.
+
+## Architectural Position
+
+AIOA is orthogonal to deployment topology.
+
+It applies to:
+
+- modular applications;
+- monoliths;
+- microservice systems;
+- distributed systems;
+- event-driven platforms;
+- hybrid enterprise environments.
+
+A poorly structured microservice ecosystem can have a larger Crystallization Radius than a well-structured modular application. A distributed platform can remain highly local when boundaries, contracts, and reasoning paths are explicit.
+
+AIOA evaluates how software is understood and safely modified. It does not prescribe where software is deployed.
+
+## Design Bias
+
+AIOA favors:
+
+- local reasoning;
+- explicit boundaries;
+- context isolation;
+- atomic components;
+- deterministic contracts;
+- observable state transitions;
+- minimal traversal requirements.
+
+AIOA disfavors:
+
+- hidden dependencies;
+- deep abstraction chains;
+- architectural glue layers;
+- context scattering;
+- runtime ambiguity;
+- excessive orchestration;
+- primitive domain data crossing boundaries.
+
+## Technical Implementation Patterns
+
+### TIP-001: AI Usage Is Not a KPI
+
+**Problem:** Teams measure prompt count, token usage, AI session count, or time spent in AI tools as productivity metrics.
+
+**Why it matters:** This rewards token burning, not engineering outcomes. Good AI-assisted work often means fewer prompts, smaller context, faster verification, and cleaner decisions.
+
+**Rule:** Measure outcomes, decision quality, customer impact, delivery speed, defect rate, and maintainability. Do not measure AI usage itself as a performance target.
+
+**AIOA interpretation:** Token efficiency is an architecture concern, not a vanity metric. The goal is to make work require less AI traversal, not to make people use more AI.
 
 ### TIP-002: Semantic Collision
-Same name or type for different concepts. AI agent cannot distinguish entities without deep context.
-**Pattern:** Each entity owns distinct type, even if same primitive structure underneath. `UserId` and `PaymentId` - different types.
+
+**Problem:** Different domain concepts share the same primitive type, generic name, or structural shape. An AI agent starts treating them as interchangeable.
+
+Example failure:
+
+- `TradingDayTime`
+- `TuningDayTime`
+- `EvalDayTime`
+
+If these collapse into `day_time`, the code can remain syntactically correct, type-safe, deployable, and test-green while business semantics are destroyed.
+
+**Pattern:** Represent each domain concept with its own type, even if the underlying representation is identical.
+
 ```text
-// Pattern: distinct types for distinct concepts
-type UserId = string    // "usr_xxx"
-type PaymentId = string // "pay_xxx"
+type UserId wraps string
+type PaymentId wraps string
 
 function getUser(id: UserId): User
 function getPayment(id: PaymentId): Payment
 ```
-**Anti-Pattern:** All identifiers = `str`. AI cannot distinguish `user_id` from `payment_id` without reading full call chain.
+
+**Anti-pattern:**
+
 ```text
-// Anti-Pattern: everything is string
 function getUser(id: string): User
 function getPayment(id: string): Payment
-// compiler cannot catch: getUser(paymentId) // BUG
+
+getUser(paymentId)  // compiler cannot catch the semantic bug
 ```
 
 #### Domain Identifier Rule
 
-Field representing domain identifier (user ID, order ID, strategy name, etc.) must use value type. NOT primitive. Applies even when all IDs structurally same primitive.
+A field representing a domain identifier must use a value type, not a primitive.
 
-Value type must:
-1. Be distinct from underlying primitive - type system prevents accidental interchange
-2. Optionally validate value at construction (e.g. 'this strategy name is registered')
+This applies to:
 
-Pseudo example - wrapper type delegates to primitive but typed as distinct concept:
-```text
-// Pseudo - domain identifier as a value type
-type UserId wraps string      // distinct from primitive
-type OrderId wraps string     // compiler prevents accidental interchange
+- user IDs;
+- order IDs;
+- strategy names;
+- account IDs;
+- instrument symbols;
+- workflow IDs;
+- any domain-significant identifier.
 
-function createUser(id: UserId): User
-// createUser(orderId)  ← compiler error, type mismatch
-```
+The value type must:
 
-Mechanism per-language. Principle universal.
+1. Be distinct from the underlying primitive.
+2. Optionally validate the value at construction.
+3. Encode business meaning in the type name.
+
+The mechanism is language-specific. The rule is universal.
 
 ### TIP-003: Repository Search Bottleneck
-Single file or module becomes bottleneck. AI must read it to understand anything in system.
-**Pattern:** Responsibility distributed across narrow specialized modules. Each module solves one task.
+
+**Problem:** AI agents spend a large share of execution time searching, reading, and reconstructing repository context before writing a small patch.
+
+Source code is not a flat text corpus. It is a dependency graph.
+
+Agents need:
+
+- caller/callee relationships;
+- blast-radius analysis;
+- dependency tracing;
+- test relationship awareness;
+- architectural impact mapping.
+
+**Pattern:** Organize code so relevant behavior is discoverable through narrow, explicit modules and structural relationships.
+
 ```text
-// Pattern: narrow modules, single responsibility
-import payment/
-import billing/
-import notification/
-// AI reads only payment/ to understand payment logic
-```
-**Anti-Pattern:** 2000-line `utils.py` imported by half codebase. AI reads entire file for any change.
-```text
-// Anti-Pattern: everything in one file
-from utils import *         // 2000 lines, 50 unrelated functions
-// AI must read all 2000 lines - cannot know what's needed
+payment/
+  contracts/
+  actors/
+  policies/
+  tests/
+
+billing/
+  contracts/
+  actors/
+  policies/
+  tests/
 ```
 
-### TIP-004: Code Crystallization
-Chain of wrappers. Each element forwards control. Zero value added.
-**Pattern:** Direct A→C call. Intermediate B adds nothing - no transformation, no validation.
+An agent changing payment logic should not need to read billing, notification, and a global utility module unless the change truly crosses those boundaries.
+
+**Anti-pattern:**
+
 ```text
-// Pattern: call directly
+utils.py       // 2000 lines, 50 unrelated functions
+services.py    // mixed billing, payment, notification, auth
+helpers.py     // imported by half the repository
+```
+
+#### Repository Locality Rule
+
+Prefer:
+
+- cohesive directories around business boundaries;
+- small modules with one reason to change;
+- explicit contracts near the boundary they protect;
+- tests close to the behavior they verify;
+- structural graph tooling for impact analysis.
+
+Avoid:
+
+- global utility dumping grounds;
+- wildcard imports;
+- cross-domain helper modules;
+- files that every change requires reading.
+
+### TIP-004: Code Crystallization
+
+**Problem:** Architecture accumulates pass-through layers, mediator chains, factory chains, interface wrappers, and forwarding classes that add traversal but no meaning.
+
+**Goal:** Maximize business-logic density while minimizing Crystallization Radius.
+
+**Pattern:** Keep behavior close to its owning boundary. Use abstractions only when they reduce real complexity, protect a real contract, or encode a meaningful policy.
+
+```text
 class PaymentProcessor:
     function charge(amount):
-        return Gateway.charge(amount)  // direct call
+        return gateway.charge(amount)
 ```
-**Anti-Pattern:** A→Router→Handler→Service→Repository. Every step forwards. Zero logic.
+
+**Anti-pattern:**
+
 ```text
-// Anti-Pattern: dead indirection chain
-PaymentController → PaymentRouter → PaymentHandler
-    → PaymentService → PaymentRepository → Gateway
-// each layer just forwards - zero value added
-// AI must read ALL 5 files to understand "charge"
+PaymentController
+  -> PaymentRouter
+  -> PaymentHandler
+  -> PaymentService
+  -> PaymentRepository
+  -> Gateway
+
+// each layer forwards without validation, transformation, policy, or ownership
 ```
 
 #### Pass-Through Wrapping Rule
 
-Function, method, or class existing only to invoke another with same signature = pass-through. Adds zero value. Remove.
+A function, method, class, file, or re-export that exists only to invoke another function, method, class, file, or symbol with the same signature is a pass-through.
 
-Pass-throughs allowed ONLY if providing at least one of:
-1. Validation or invariant enforcement
-2. Logging or telemetry
-3. Meaningful signature transformation
-4. Acts as documented public API boundary - inner function internal
+Pass-throughs are allowed only when they provide at least one of:
 
-If none of (1)–(4) apply, caller invokes inner function directly. Wrapper = dead indirection. Anti-pattern of TIP-004.
+1. Validation or invariant enforcement.
+2. Logging, telemetry, or policy enforcement.
+3. Meaningful signature or contract transformation.
+4. A documented public API boundary while the inner function remains internal.
 
-Rule applies to:
-- Functions calling other functions with identical signatures
-- Wrapper classes forwarding to inner class only
-- Re-exports under different name without transformation
-- Files containing docstring-redirector only - no executable code
-
-Pattern universal: layer whose sole purpose = forward to another layer. Language mechanism irrelevant.
+If none apply, remove the wrapper and call the real behavior directly.
 
 ### TIP-005: Quantum Spectrum
-Components at different abstraction levels indistinguishable by name. Everything called 'service' despite different complexity.
-**Pattern:** Pico Actor - deterministic primitive. Nano Actor - reusable business workflow. Micro Actor - primary business boundary. Different levels. Different names. Prefer stateless - ADTO (TIP-007) handles state when needed.
+
+**Problem:** Components at different abstraction levels are indistinguishable. Everything becomes a "service", "manager", "helper", or "utility" regardless of size, responsibility, and reuse pressure.
+
+**Pattern:** Use explicit actor levels as reasoning boundaries.
+
 ```text
-// Pattern: named by level
-pico actor FormatPostalCode(input: string): string     // deterministic primitive
-nano actor ApplyDiscount(order, customer): Order        // reusable business workflow
-micro actor BillingService: manages invoices, payments   // primary business boundary
+Micro Actor: Billing
+  Primary business boundary and bounded context.
+
+Nano Actor: ApplyDiscount
+  Reusable business workflow.
+
+Pico Actor: FormatInvoiceNumber
+  Deterministic execution primitive.
 ```
-**Anti-Pattern:** Everything called 'Service' - pure function OR distributed microservice. No distinction.
-```text
-// Anti-Pattern: everything is "Service"
-class FormatService        // actually: formatPostalCode(a, b): string
-class DiscountService      // actually: applyDiscount(order): Order
-class BillingService       // actually: microservice with DB, queue, API
-// AI cannot distinguish simple functions from complex subsystems
-```
+
+#### Micro Actors
+
+Micro Actors define primary business boundaries.
+
+Examples:
+
+- Billing;
+- Inventory;
+- Ordering;
+- Customer Management.
+
+Responsibilities:
+
+- own business capabilities;
+- define bounded contexts;
+- contain local business workflows.
+
+An AI task should usually begin at the owning Micro Actor.
+
+#### Nano Actors
+
+Nano Actors encapsulate reusable business workflows.
+
+Examples:
+
+- `ApplyDiscount`;
+- `ValidatePromotion`;
+- `CalculateTax`;
+- `DetermineShippingMethod`.
+
+Responsibilities:
+
+- coordinate business rules;
+- support reuse across features;
+- prevent meaningful logic duplication.
+
+#### Pico Actors
+
+Pico Actors encapsulate deterministic execution primitives.
+
+Examples:
+
+- `FindCustomerById`;
+- `FormatInvoiceNumber`;
+- `PublishTelemetryEvent`;
+- `SerializeContract`.
+
+Responsibilities:
+
+- perform one explicit operation;
+- expose minimal ambiguity;
+- contain little or no branching logic.
 
 #### Extraction Rule
 
-Quantum Spectrum follows simple principle:
+Start large. Extract downward only when reuse pressure appears.
 
-**Start large. Extract downward only when reuse pressure appears.**
+1. Implement new behavior inside the owning Micro Actor.
+2. If business behavior becomes reusable, extract it into a Nano Actor.
+3. If deterministic technical behavior becomes reusable, extract it into a Pico Actor.
 
-Workflow:
-
-**Step 1:** Implement new behavior inside parent Micro Actor.
-
-**Step 2:** Business behavior reusable? Extract into Nano Actor.
-
-**Step 3:** Deterministic technical behavior reusable? Extract into Pico Actor.
-
-Prevents premature abstraction. Preserves future flexibility.
+This prevents premature abstraction while preserving future flexibility.
 
 ### TIP-006: Declarative Straight-Line Code
-Business logic mixed with execution mechanics (retry, fallback, timeout). Creates deep nesting.
-**Pattern:** Execution mechanics extracted into separate abstractions (RetryPolicy, TimeoutPolicy). Business code - linear, declarative.
-```text
-// Pattern: retry policy extracted with ADTO config
-struct RetryConfig(ADTO):
-    maxAttempts: int
-    backoff: string
 
-retryPolicy = RetryPolicy(config=RetryConfig(maxAttempts=3, backoff="exponential"))
+**Problem:** Business logic is buried inside manual execution mechanics: nested branching, loops, retries, locks, transactions, resource scopes, callback chains, and exception tunnels.
+
+The agent must track execution state before it can safely change business behavior.
+
+**Pattern:** Move recurring execution mechanics into explicit reusable constructs. Business code should describe intent in a linear path.
+
+```text
+retryPolicy = RetryPolicy(maxAttempts=3, backoff="exponential")
 
 function chargeCustomer(amount):
     return retryPolicy.execute(() => gateway.charge(amount))
-// business logic is ONE line - retry mechanic is abstracted
 ```
-**Anti-Pattern:** try/except/retry boilerplate repeated in every function. Business logic buried under 3 levels of error handling.
+
+**Anti-pattern:**
+
 ```text
-// Anti-Pattern: hand-written retry in every function
 function chargeCustomer(amount):
     for attempt in 1..3:
         try:
             return gateway.charge(amount)
         except NetworkError:
-            if attempt == 3: throw
-            sleep(2^attempt)
-// business logic hidden inside error handling - AI reads 10 lines for 1 intent
+            if attempt == 3:
+                throw
+            sleep(2 ^ attempt)
 ```
 
-### TIP-007: Auditable Data Transfer Objects (ADTO)
-Data crossing boundaries must be typed AND auditable. ADTO combines strict type safety + automatic mutation history.
+#### Execution Policy Rule
 
-#### ADTO Contract (language-agnostic)
+Execution mechanics belong in policies, boundaries, libraries, or prepared primitives, not scattered through business methods.
 
-Object claiming ADTO status must satisfy 3 requirements. Language-independent:
+Good candidates for declarative primitives:
 
-1. **Immutability** - object state cannot mutate after construction. By any means available in host language (frozen data classes, readonly fields, immutable interfaces, persistent data structures, etc.). Mechanism per-language. Requirement universal.
-2. **Auditability** - object must provide:
-   - Method to record state transition (operation name, reason, before-value, after-value)
-   - Method to retrieve transition history as ordered sequence
-3. **Optional provenance** - object may record which class/method created it. End-to-end traceability.
+- validation pipelines;
+- retry policies;
+- timeout policies;
+- transaction boundaries;
+- resource scopes;
+- concurrency limits;
+- result types;
+- event handlers;
+- collection pipelines.
 
-Contract universal. Mechanism (framework, base class, code generation, annotation, etc.) per-language. Implementer's choice.
+Guard clauses are still useful for visible business preconditions. They solve conditional nesting. TIP-006 targets the broader problem of manual procedural machinery.
 
-**Pattern:** Every boundary-crossing object satisfies ADTO contract. Mechanism per-language.
+### TIP-007: Strict JSON Gateways and Auditable DTOs
+
+**Problem:** Loose JSON, raw dictionaries, nullable structures, and ambiguous payloads leak into business logic. AI agents respond by generating defensive boilerplate everywhere.
+
+**Core rule:** Loose JSON must die at the boundary.
+
+#### Strict JSON Gateway
+
+A Strict JSON Gateway:
+
+1. Accepts loose external input.
+2. Validates it against a strict schema.
+3. Rejects malformed payloads immediately.
+4. Converts valid input into typed DTO contracts.
+5. Passes only trusted DTOs into business logic.
+
 ```text
-// Pattern: typed boundary data with audit trail
-// ADTO Contract: immutable, auditable, optionally traceable
-// The mechanism is per-language; the contract is universal.
+gateway PromoRequestGateway:
+    accepts json
+    validates PromoRequestSchema
+    returns PromoRequest
 ```
 
-```text
-structure PropertyChange {
-    property_name: String
-    new_value: Any
-}
+After the gateway:
 
-structure TraceEntry {
+```text
+function applyPromo(request: PromoRequest):
+    promo = database.findPromo(request.code)
+
+    if promo not found:
+        throw PromoNotFound
+
+    apply(promo, request.customerId)
+```
+
+The remaining checks are business validation, not technical sanitation.
+
+#### Perimeter Validation Rule
+
+Validate at the perimeter:
+
+- required fields;
+- JSON shape;
+- primitive types;
+- enum membership;
+- ID format;
+- string normalization;
+- basic range checks;
+- schema version compatibility.
+
+Keep in business logic:
+
+- whether an entity exists;
+- whether a customer is eligible;
+- whether a discount is combinable;
+- whether an account may perform an action;
+- whether a workflow transition is valid.
+
+The gateway protects structure. The business layer protects meaning.
+
+#### ADTO Contract
+
+When runtime state provenance matters, use an Auditable DTO (ADTO).
+
+An ADTO is a typed DTO that also records meaningful business state transitions.
+
+An object claimed to be an ADTO must provide:
+
+1. **A deterministic typed contract** - required fields, allowed types, nullability, and structural guarantees are explicit.
+2. **Controlled mutation semantics** - either immutable snapshots or controlled transition methods. The object must not allow untracked state changes.
+3. **Auditability** - a method to record a business-significant state transition.
+4. **History retrieval** - a method to retrieve ordered mutation history.
+5. **Optional provenance** - caller, operation, reason, timestamp, trace ID, or source component when useful.
+
+Example:
+
+```text
+structure PropertyChange:
+    propertyName: String
+    oldValue: Any
+    newValue: Any
+
+structure TraceEntry:
     timestamp: Datetime
-    caller_class: String
-    caller_method: String
+    operation: String
+    callerClass: String
+    callerMethod: String
+    reason: String
     changes: List[PropertyChange]
     snapshot: Object
-}
 
-abstract class ADTO {
+abstract class ADTO:
     private history: List[TraceEntry] = []
-    private trace_enabled: Boolean = Config.get("ADTO_TRACE_ENABLED")
 
-    constructor() {
-        if trace_enabled {
-            bind_property_triggers(this)
-        }
-    }
-
-    private on_property_changed(property_name: String, new_value: Any) {
-        if !trace_enabled {
-            return
-        }
-
-        caller = StackTrace.get_external_caller()
-        last = history.last_or_null()
-
-        change = PropertyChange(
-            property_name = property_name,
-            new_value = deep_clone(new_value)
-        )
-
-        if last != null
-           and last.caller_class == caller.class
-           and last.caller_method == caller.method {
-
-            last.changes.upsert_by_property(property_name, change)
-            last.snapshot = deep_clone(this)
-            return
-        }
-
+    function recordMutation(operation, reason, changes):
         history.add(
             TraceEntry(
-                timestamp = Clock.utc_now(),
-                caller_class = caller.class,
-                caller_method = caller.method,
-                changes = [change],
-                snapshot = deep_clone(this)
+                timestamp = Clock.utcNow(),
+                operation = operation,
+                callerClass = StackTrace.externalClass(),
+                callerMethod = StackTrace.externalMethod(),
+                reason = reason,
+                changes = deepClone(changes),
+                snapshot = deepClone(this)
             )
         )
-    }
 
-    function mutation_history(): List[TraceEntry] {
+    function mutationHistory(): List[TraceEntry]:
         return history
-    }
-}
 ```
-**Anti-Pattern:** Raw `dict` crossing boundaries. Or manual `_provenance` field. AI must read implementation to understand structure. Provenance forgotten or incomplete.
-```text
-// Anti-Pattern: raw dict + manual provenance
-function createOrder(data: dict) -> dict:
-    // what keys does 'data' need? what keys does output have?
-    // AI must read the entire function body to find out
-    return {"status": "ok", "order_id": id}
 
+#### Mutation Slice Rule
+
+ADTOs should record meaningful business transitions, not every setter call.
+
+Good mutation slice:
+
+```text
+operation: ApplyPaymentFailurePolicy
+reason: Failed payment threshold exceeded
+
+changes:
+  status: Active -> Suspended
+  riskScore: 20 -> 95
+```
+
+The goal is explainability, not compliance noise.
+
+**Anti-patterns:**
+
+```text
+function process(data: dict): Result
+```
+
+```text
 class Order:
-    _provenance: list  // manually maintained - forgotten, wrong, incomplete
+    _provenance: list  // manually maintained, easy to forget, incomplete
 ```
 
 ### TIP-008: Event-Driven Integration
-Components coupled through direct calls. Creates tight coupling.
-**Pattern:** All cross-actor communication through event bus. Choose ONE event bus mechanism. Technology choice = implementation decision. NOT architectural pattern. Default: in-process InMemoryEventBus (zero infrastructure). RabbitMQ/Kafka/other broker already present? Use it directly. Do NOT add second bus. Pico actors, Nano actors, Micro actors must NEVER talk directly.
+
+**Problem:** Workflows are coupled through direct cross-component calls. A simple business change forces the agent to understand callers, receivers, ordering, retries, side effects, and distributed failure behavior.
+
+**Goal:** Reduce cross-boundary reasoning by communicating through explicit business events.
+
+**Core rule:** Micro Actors, Nano Actors, and Pico Actors must not call each other's methods directly. All cross-actor communication goes through one event mechanism.
+
+Events are contracts. They should be:
+
+- immutable;
+- typed;
+- versioned when crossing durable or external boundaries;
+- business-oriented;
+- implementation-independent.
+
+Examples:
+
 ```text
-// Rule: ALL cross-actor communication via event bus
-// Choose ONE mechanism. Default: InMemoryEventBus. If RabbitMQ already present, use that.
-
-// In-memory event bus - simple publish/subscribe within process
-class InMemoryEventBus:
-    handlers = Map<Type, List<Handler>>()
-
-    function publish<T>(event: T):
-        for handler in handlers[type(event)]:
-            handler(event)
-
-    function subscribe<T>(handler: Handler<T>):
-        handlers[type(event)].add(handler)
-
-// All actors communicate ONLY through the bus:
-// Pico → event → Nano → event → Micro
-
-// Pico actor (pure function) publishes result
-pico actor ValidateAddress(addr: RawAddress):
-    // validate logic
-    bus.publish(AddressValidated(address, valid))
-
-// Nano actor (shared functionality) subscribes and publishes
-nano actor ShippingManager:
-    bus.subscribe<AddressValidated>(onAddressValidated)
-    function onAddressValidated(event):
-        if event.valid:
-            bus.publish(ShipmentPrepared(orderId, address))
-        else:
-            bus.publish(ValidationFailed(orderId, reason))
-
-// Micro actor (independent service) subscribes
-micro actor LogisticsService:
-    bus.subscribe<ShipmentPrepared>(onShipmentPrepared)
-    function onShipmentPrepared(event):
-        // call external logistics API
+PaymentRequested
+PaymentCompleted
+InventoryReserved
+OrderCancelled
 ```
 
-**Key rule:** Event bus technology = implementation decision. NOT architectural pattern. Default: InMemoryEventBus (zero infrastructure). RabbitMQ/Kafka already present in deployment? Components emit events to it directly. No second bus needed. Choice stays within same component boundary.
+#### Locality Principle
 
-**Anti-Pattern:** `ComponentA` calls `B.internal_method()` directly. Coupling grows. Changing one component requires changing other.
+A component should not need to understand how another component performs its work.
+
+It should understand:
+
+- the event it emits;
+- the event it consumes;
+- its own local business rules.
+
+#### Event Choreography Rule
+
+A workflow is choreography-oriented when:
+
+1. The entry point emits a command or fact event and exits.
+2. Each actor subscribes to one or more events.
+3. Actor method calls target only the actor's own dependencies, not another actor's internal behavior.
+4. State transitions are observable as event emissions or ADTO mutation history.
+
+This rule is structural. A workflow violates TIP-008 as soon as one actor invokes another actor's method, regardless of whether the class is named `Service`, `Controller`, `Coordinator`, `Orchestrator`, `Manager`, or `Actor`.
+
+Violation:
+
 ```text
-// Anti-Pattern: direct call to actor internal method
 class OrderService:
     function placeOrder(cart):
-        // ...
-        billingService.applyCharge(amount)  // direct call to Nano actor
-        notificationService.sendEmail(user)  // direct call to Pico actor
-// AI must read billing + notification internals to understand order placement
-// Changing billing.interface breaks OrderService
+        billingService.applyCharge(amount)
+        notificationService.sendEmail(user)
 ```
 
-#### Event Choreography
+Required actor-to-actor form:
 
-Workflow satisfies choreography-only when holding all 3 properties:
+```text
+class OrderActor:
+    function placeOrder(cart):
+        return OrderPlaced(orderId, customerId, total)
 
-1. Pico entry point emits single command event and exits. Does NOT invoke any other actor's methods.
-2. Each actor subscribes to one or more events. Actor's method invocations target only own dependencies. Never another actor.
-3. State transitions observable as event emissions. No state transition implemented as direct call between actors.
+class BillingActor:
+    @handler(OrderPlaced, PaymentRequested)
+    function requestPayment(event):
+        return PaymentRequested(event.orderId, event.total)
 
-Workflow violates rule as soon as actor invokes method on another actor. Presence of "Orchestrator", "Coordinator", or "Controller" driving workflow = strong violation signal. But rule itself is structural (look at call sites). Does not depend on naming.
+class NotificationActor:
+    @handler(OrderPlaced, EmailRequested)
+    function requestEmail(event):
+        return EmailRequested(event.customerId, "order placed")
+```
 
-All events valid. Forbidden: direct method calls between actors.
+#### Event Bus Rule
 
-ADTO (TIP-007) makes event-driven workflows transparent: each event carries typed, auditable payload. Allows tracking all state transitions, understanding process chains, finding bugs by reading event history without reading actor internals.
+Use one event mechanism inside a boundary.
+
+Default for a single-process system:
+
+- an in-process event bus or dispatcher.
+
+If Kafka, RabbitMQ, an actor runtime, or another broker is already the system's event mechanism:
+
+- use it directly;
+- do not add a second bus layer only to satisfy the pattern.
+
+The technology is an implementation decision. The architectural pattern is explicit event contracts and local handlers.
+
+#### Scope and Allowed Synchronous Calls
+
+The "event bus only" rule applies to actor-to-actor communication.
+
+It does not forbid an actor from synchronously calling its own local dependencies, such as:
+
+- repositories owned by that actor;
+- gateways to external systems;
+- policy objects;
+- validators;
+- mappers;
+- transaction boundaries;
+- retry policies;
+- telemetry clients.
+
+Those calls are implementation dependencies of the actor, not communication with another actor.
+
+If a dependency owns independent business behavior, it is an actor and must be reached through an event.
+
+Event-Driven Integration does not require every event mechanism to be distributed or asynchronous. An in-process event bus is valid. The strict requirement is actor decoupling through explicit event contracts.
 
 #### Concrete Implementation Patterns
 
-##### Pattern 1: Event-as-ADTO Pattern
+**Event-as-ADTO**
 
-Events inherit from ADTO (TIP-007). First-class data objects with full provenance:
-
-* mutation audit trail via PropertyChange and TraceEntry;
-* caller detection on every mutation;
-* `extra="forbid"` prevents accidental fields;
-* baked-in `trace_id: UUID` and `timestamp: datetime`.
+Events that cross meaningful boundaries should be typed DTOs. When provenance matters, make them ADTOs.
 
 ```text
-class PaymentRequested(ADTO):
-    order_id: UUID
-    amount: Decimal
-    currency: str
-    # trace_id and timestamp come from ADTO
-    # extra="forbid" is inherited
-    # every mutation writes a TraceEntry
+class PaymentRequested extends ADTO:
+    orderId: OrderId
+    amount: Money
+    currency: Currency
+    traceId: TraceId
+    timestamp: Datetime
 ```
 
-##### Pattern 2: Declarative Handler Binding
-
-`@handler` decorator declares what handler consumes and produces:
+**Declarative Handler Binding**
 
 ```text
 @handler(OrderPlaced, InventoryReserved)
-def reserve_inventory(event: OrderPlaced) -> InventoryReserved:
-    ...
+function reserveInventory(event: OrderPlaced): InventoryReserved
 ```
 
-PipelineBuilder introspects these decorators to wire actors to bus automatically. Type annotations validated against declared input type. Mismatches caught at wiring time. NOT at runtime.
+The pipeline builder validates that the declared event type and method annotation match.
 
-##### Pattern 3: Handler Auto-Publish
-
-Handler returns value? PipelineBuilder wraps it. Return automatically published to bus:
+**Handler Auto-Publish**
 
 ```text
 @handler(OrderPlaced, InventoryReserved)
-def reserve_inventory(event: OrderPlaced) -> InventoryReserved:
-    return InventoryReserved(order_id=event.order_id)
+function reserveInventory(event: OrderPlaced): InventoryReserved:
+    return InventoryReserved(orderId=event.orderId)
 ```
 
-Handler returns list? Each item published individually. Eliminates boilerplate of manual publish calls inside every handler.
+Returned events are published automatically. Lists are published item by item.
 
-##### Pattern 4: Pipeline Wiring
+**Error Isolation with Continuation**
 
-PipelineBuilder.build(actors, bus) iterates actors. Finds @handler-decorated methods. Subscribes each to bus based on declared input type:
+One failed handler should not silently corrupt the whole pipeline. The event mechanism must define failure behavior explicitly:
 
-```text
-bus = InMemoryEventBus()
-pipeline = PipelineBuilder.build([checkout_actor, inventory_actor, notification_actor], bus)
-```
+- log and continue;
+- retry;
+- dead-letter;
+- fail the command;
+- compensate.
 
-Actor order in list determines registration order. Bus becomes pure routing layer. Does not know which handlers exist until wiring.
+Choose based on business semantics. Do not leave it implicit.
 
-##### Pattern 5: Error Isolation with Continuation
+## Review Checklist
 
-Handler raises? Error logged. Other handlers for same event type continue executing:
+Use this checklist when reviewing specs, plans, tasks, and code changes.
 
-```text
-# both handle OrderPlaced
-# if inventory_actor raises, notification_actor still runs
-```
-
-One failed handler does not crash pipeline. Bus logs failure. Continues dispatching to remaining subscribers.
-
-### Anti-Patterns by Principle
-
-Principles below universal. Each shown with pseudo-code example. Linter under each language encodes detection.
-
----
-
-**TIP-002 - Untyped IDs**
-
-Domain identifier = concept. NOT primitive. Its type must be distinct from primitive it wraps. Type system prevents accidental interchange of IDs from different concepts.
-
-Typical violation:
-```text
-// Violation: domain identifier stored as a raw primitive
-type UserId = string    // bare primitive - compiler cannot distinguish
-type OrderId = string   // UserId and OrderId are the same type
-```
-
-Typical fix:
-```text
-// Fix: distinct value type wrapping the primitive
-type UserId wraps string    // distinct type - compiler catches misuse
-type OrderId wraps string   // UserId and OrderId are different types
-```
-
----
-
-**TIP-004 - Dead indirection**
-
-Pass-through layer adding no behavior. Remove. Not reduce.
-
-Typical violation:
-```text
-// Violation: wrapper that adds no behavior - pure forwarding
-function handleRequest(data): Response {
-    return inner.handleRequest(data)  // zero transformation
-}
-
-// The language mechanism varies (struct embedding, class extension, interface delegation).
-// The pattern is the same: a layer whose sole purpose is to forward to another.
-```
-
----
-
-**TIP-006 - Control flow in business code**
-
-Execution mechanics (retries, locks, logging severity, error branching) belong in policies. NOT in business methods.
-
-Typical violations:
-- Runtime branch on environment flags for severity policy (`if dev_mode: ... else: ...` deciding between `logger.warning` and `logger.error`)
-- Nested `for/try/except/if` more than 3 levels deep in single method
-- Manual retry loops inside business logic when retry policy available
-- Inline environment-flag branching for any execution concern (timeout, retry, fallback, severity)
-
----
-
-**TIP-007 - Untyped data crossing boundaries**
-
-Data structure passing across actor boundary must have defined type. Generic maps defeat static analysis. Force consumer to read producer's code to understand data.
-
-Typical violation:
-```text
-// Violation: untyped dictionary crossing a boundary
-function process(data: Dict): Result
-// consumer must read the entire function body to understand the data shape
-```
-
-Fix: typed object with named fields. ADTOs without `record_mutation` / history = also violation of auditable half of contract (see Section A).
-
----
-
-**TIP-008 - Direct calls between actors**
-
-Actor's method invocations target only own dependencies. Invoking another actor's method = structural violation. Language irrelevant.
-
-Typical violations:
-- `MicroActor.run()` method calling `NanoActor.do_thing()` directly
-- `pico_actor_main()` function calling `micro_actor.run()` directly
-- "orchestrator" / "coordinator" / "controller" class driving workflow through method calls
-
-In all cases, fix same: caller emits command event and exits. Callee subscribes to that event and reacts. See Event Choreography structural rule above.
+| Principle | Review question | Common violation |
+| --- | --- | --- |
+| TIP-001 | Are AI metrics outcome-oriented? | Measuring prompts, tokens, or AI session count as productivity. |
+| TIP-002 | Are domain concepts represented by semantic types? | User IDs, order IDs, strategy names, or workflow IDs passed as raw strings. |
+| TIP-003 | Can relevant behavior be found locally? | Global `utils`, `helpers`, or mixed `services` modules imported across domains. |
+| TIP-004 | Does each layer add meaning, policy, transformation, or a real boundary? | Pass-through wrappers and forwarding chains. |
+| TIP-005 | Are Micro, Nano, and Pico responsibilities distinguishable? | Everything named `Service`, `Manager`, or `Helper` regardless of abstraction level. |
+| TIP-006 | Is business logic linear and intent-focused? | Manual retry, timeout, transaction, lock, fallback, or nested error mechanics in business methods. |
+| TIP-007 | Does loose input die at a strict boundary? | Raw `dict` / loose JSON crossing into business logic. |
+| TIP-007 | Is important state provenance explainable? | DTOs with important mutable state but no mutation history. |
+| TIP-008 | Do actors communicate only through events? | Micro/Nano/Pico actors calling each other's methods directly. |
+| TIP-008 | Is one event mechanism used per boundary? | Adding a second bus wrapper over an existing broker without architectural value. |
+| Cross-cutting | Are state transitions observable? | Hidden state changes with no event, ADTO history, or focused telemetry. |
 
 ## Usage
 
-Each template and command in this preset references AIOA.md as single source of truth for all TIP definitions.
+Templates and commands in this preset reference this file as the canonical AIOA definition.
+
+When a project-specific decision conflicts with a generic pattern, document the reason explicitly in the spec or plan. AIOA is an optimization framework, not a substitute for business constraints.
