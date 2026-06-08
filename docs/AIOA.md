@@ -1,116 +1,162 @@
-# AIOA - AI-Oriented Architecture
+# AIOA — AI-Oriented Architecture
 
-> AIOA does not replace existing architecture styles. It refines them for codebases that are read, reviewed, and modified by AI coding agents. The optimization target is simple: reduce how much context an agent must traverse before it can safely change the system.
+AIOA is an architectural discipline for codebases that are read, reviewed, modified, tested, and verified by AI coding agents.
 
-This document is the single source of truth for AIOA principles used by this Spec Kit preset.
+AIOA does not replace existing architectural styles. It constrains their implementation so an AI agent can make safe changes with minimal context traversal and without losing domain meaning.
 
-## Core Objective
+This document is the canonical AIOA contract for specifications, plans, implementation tasks, reviews, and generated code.
 
-### Minimize Crystallization Radius
 
-**Crystallization Radius** is the amount of system context an AI agent must traverse before it can safely understand, modify, test, or verify a component.
+## 1. Core Objective
 
-Large radius creates:
+### 1.1 Crystallization Radius
+
+**Crystallization Radius** is the amount of system context an AI agent must inspect before it can safely understand, modify, test, or verify a component.
+
+AIOA optimizes every design decision for a smaller Crystallization Radius while preserving domain meaning.
+
+A design increases Crystallization Radius when it forces the agent to traverse:
 
 - broad repository searches;
-- dependency-chain traversal;
-- excessive abstraction reading;
-- context-window inflation;
-- expensive debugging cycles;
-- higher risk of incorrect patches.
+- unrelated modules or bounded contexts;
+- deep dependency chains;
+- pass-through abstraction layers;
+- hidden runtime behavior;
+- global utilities or shared helper modules;
 
-Small radius creates:
+A design reduces Crystallization Radius when it enables:
 
 - local reasoning;
-- isolated modifications;
-- deterministic testing;
-- predictable retrieval;
-- lower token consumption;
-- safer code generation.
+- isolated modification;
+- explicit contracts;
+- predictable dependency traversal;
+- observable state transitions;
+- lower token and context-window usage.
 
-Every architectural decision should be evaluated by one question:
+Every architectural decision MUST answer:
 
-> How much additional context must an AI agent consume before making a safe change?
+> What additional context must an AI agent consume before making a safe change?
 
-If a decision expands the Crystallization Radius without preserving important domain meaning, it carries an operational cost.
+If the answer expands the radius without protecting domain meaning, a real boundary, or an unavoidable integration constraint, the decision violates AIOA.
 
-### Preserve Semantic Integrity
+### 1.2 Semantic Integrity
 
-AIOA has two constraints:
+**Semantic Integrity** means that domain concepts remain explicit, distinct, and protected in names, types, contracts, boundaries, and state transitions.
 
-1. **Minimize Crystallization Radius** - reduce traversal cost.
-2. **Preserve Semantic Integrity** - keep domain meaning explicit and protected.
+AIOA has two inseparable constraints:
 
-Reducing traversal without semantic integrity causes **Semantic Collision**: distinct business concepts collapse into the same names, primitives, or contracts.
+1. Minimize Crystallization Radius.
+2. Preserve Semantic Integrity.
 
-Preserving semantics without controlling traversal causes context explosion.
+Reducing traversal while collapsing domain concepts creates **Semantic Collision**.
 
-Both constraints must evolve together.
+Preserving semantics while scattering behavior creates context explosion.
 
-## Architectural Position
+A design is AIOA-aligned only when both constraints are satisfied.
+
+## 2. Conformance Model
+
+AIOA conformance is evidence-based.
+
+A system is not AIOA-conformant because it uses names such as `Actor`, `Gateway`, `Policy`, `Handler`, `Service`, `DTO`, or `Event`.
+
+A system is AIOA-conformant only when the implementation proves:
+
+- explicit ownership boundaries;
+- typed or schema-validated contracts;
+- semantic domain types for domain-significant values;
+- deterministic local behavior;
+- observable state transitions;
+- cross-actor communication through events;
+
+### 2.1 Intent vs Implementation
+
+Reviews MUST score two layers separately:
+
+1. **Architecture Intent** — whether the selected architecture minimizes Crystallization Radius while preserving Semantic Integrity.
+2. **Implementation Conformance** — whether the produced artifacts actually follow that architecture.
+
+A solution MAY have correct intent and incomplete implementation conformance. The review MUST state this explicitly.
+
+### 2.2 Crystallization Radius Budget
+
+Every feature MUST declare a Crystallization Radius budget before implementation.
+
+The budget MUST identify:
+
+- the owning business boundary;
+- files, modules, packages, services, or bounded contexts the agent is expected to inspect;
+- allowed dependency directions;
+- boundaries ordinary changes MUST NOT cross;
+- tests in the project's defined test location that prove the behavior;
+- external context intentionally excluded from ordinary reasoning.
+
+If implementation requires reading outside the budget, the implementation MUST explain why.
+
+A wider radius is allowed only when it preserves domain meaning, protects a real boundary, or reflects an unavoidable integration constraint.
+
+## 3. Architectural Scope
 
 AIOA is orthogonal to deployment topology.
 
 It applies to:
 
-- modular applications;
-- monoliths;
+- modular monoliths;
+- layered monoliths;
 - microservice systems;
 - distributed systems;
 - event-driven platforms;
-- hybrid enterprise environments.
+- hybrid enterprise systems.
 
-A poorly structured microservice ecosystem can have a larger Crystallization Radius than a well-structured modular application. A distributed platform can remain highly local when boundaries, contracts, and reasoning paths are explicit.
+Deployment shape does not prove AIOA conformance.
 
-AIOA evaluates how software is understood and safely modified. It does not prescribe where software is deployed.
+A well-structured modular application can have a smaller Crystallization Radius than a poorly structured microservice ecosystem.
 
-## Design Bias
+AIOA evaluates how software is understood and safely modified, not where it is deployed.
 
-AIOA favors:
+## 4. AIOA Design Rules
 
-- local reasoning;
-- explicit boundaries;
-- context isolation;
-- atomic components;
-- deterministic contracts;
-- observable state transitions;
-- minimal traversal requirements.
+### Rule 1 — Measure Outcomes, Not AI Usage (TIP-001)
 
-AIOA disfavors:
+AI usage is not a productivity KPI.
 
-- hidden dependencies;
-- deep abstraction chains;
-- architectural glue layers;
-- context scattering;
-- runtime ambiguity;
-- excessive orchestration;
-- primitive domain data crossing boundaries.
+Teams MUST NOT measure prompt count, token count, AI session count, or time spent in AI tools as success metrics.
 
-## Technical Implementation Patterns
+Teams SHOULD measure:
 
-### TIP-001: AI Usage Is Not a KPI
+- customer impact;
+- delivery throughput;
+- defect rate;
+- maintainability;
+- decision quality;
+- verification speed;
+- reduction in required context traversal.
 
-**Problem:** Teams measure prompt count, token usage, AI session count, or time spent in AI tools as productivity metrics.
+Token efficiency is an architectural property, not a vanity metric.
 
-**Why it matters:** This rewards token burning, not engineering outcomes. Good AI-assisted work often means fewer prompts, smaller context, faster verification, and cleaner decisions.
+### Rule 2 — Protect Domain Concepts with Semantic Types (TIP-002)
 
-**Rule:** Measure outcomes, decision quality, customer impact, delivery speed, defect rate, and maintainability. Do not measure AI usage itself as a performance target.
+Any domain-significant value MUST use a semantic type instead of a raw primitive.
 
-**AIOA interpretation:** Token efficiency is an architecture concern, not a vanity metric. The goal is to make work require less AI traversal, not to make people use more AI.
+This includes:
 
-### TIP-002: Semantic Collision
+- user IDs;
+- order IDs;
+- account IDs;
+- payment IDs;
+- strategy names;
+- instrument symbols;
+- workflow IDs;
+- business timestamps;
+- any value whose meaning changes system behavior.
 
-**Problem:** Different domain concepts share the same primitive type, generic name, or structural shape. An AI agent starts treating them as interchangeable.
+A semantic type MUST:
 
-Example failure:
+1. be distinct from its underlying primitive;
+2. encode the business meaning in its type name;
+3. validate construction when invalid values are possible.
 
-- `TradingDayTime`
-- `TuningDayTime`
-- `EvalDayTime`
-
-If these collapse into `day_time`, the code can remain syntactically correct, type-safe, deployable, and test-green while business semantics are destroyed.
-
-**Pattern:** Represent each domain concept with its own type, even if the underlying representation is identical.
+Example:
 
 ```text
 type UserId wraps string
@@ -120,109 +166,71 @@ function getUser(id: UserId): User
 function getPayment(id: PaymentId): Payment
 ```
 
-**Anti-pattern:**
+Violation:
 
 ```text
 function getUser(id: string): User
 function getPayment(id: string): Payment
 
-getUser(paymentId)  // compiler cannot catch the semantic bug
+getUser(paymentId)
 ```
 
-#### Domain Identifier Rule
+Syntactic correctness does not protect semantic correctness.
 
-A field representing a domain identifier must use a value type, not a primitive.
+### Rule 3 — Preserve Repository Locality (TIP-003)
 
-This applies to:
+Code MUST be organized so ordinary changes are discoverable through narrow, explicit structural paths.
 
-- user IDs;
-- order IDs;
-- strategy names;
-- account IDs;
-- instrument symbols;
-- workflow IDs;
-- any domain-significant identifier.
-
-The value type must:
-
-1. Be distinct from the underlying primitive.
-2. Optionally validate the value at construction.
-3. Encode business meaning in the type name.
-
-The mechanism is language-specific. The rule is universal.
-
-### TIP-003: Repository Search Bottleneck
-
-**Problem:** AI agents spend a large share of execution time searching, reading, and reconstructing repository context before writing a small patch.
-
-Source code is not a flat text corpus. It is a dependency graph.
-
-Agents need:
-
-- caller/callee relationships;
-- blast-radius analysis;
-- dependency tracing;
-- test relationship awareness;
-- architectural impact mapping.
-
-**Pattern:** Organize code so relevant behavior is discoverable through narrow, explicit modules and structural relationships.
+Prefer boundary-oriented structure:
 
 ```text
 payment/
   contracts/
   actors/
   policies/
-  tests/
+  gateways/
 
 billing/
   contracts/
   actors/
   policies/
-  tests/
+  gateways/
 ```
 
-An agent changing payment logic should not need to read billing, notification, and a global utility module unless the change truly crosses those boundaries.
+A change in one business boundary SHOULD NOT require reading unrelated boundaries unless the change explicitly crosses them.
 
-**Anti-pattern:**
-
-```text
-utils.py       // 2000 lines, 50 unrelated functions
-services.py    // mixed billing, payment, notification, auth
-helpers.py     // imported by half the repository
-```
-
-#### Repository Locality Rule
-
-Prefer:
-
-- cohesive directories around business boundaries;
-- small modules with one reason to change;
-- explicit contracts near the boundary they protect;
-- tests close to the behavior they verify;
-- structural graph tooling for impact analysis.
-
-Avoid:
+The repository MUST avoid:
 
 - global utility dumping grounds;
-- wildcard imports;
+- mixed-purpose `services` modules;
 - cross-domain helper modules;
-- files that every change requires reading.
+- wildcard imports;
+- files imported by most of the repository;
 
-### TIP-004: Code Crystallization
+Shared code is allowed only when it is cohesive, explicitly owned, and does not erase domain meaning.
 
-**Problem:** Architecture accumulates pass-through layers, mediator chains, factory chains, interface wrappers, and forwarding classes that add traversal but no meaning.
+### Rule 4 — Remove Crystallization Noise (TIP-004)
 
-**Goal:** Maximize business-logic density while minimizing Crystallization Radius.
+An abstraction is valid only when it owns meaning.
 
-**Pattern:** Keep behavior close to its owning boundary. Use abstractions only when they reduce real complexity, protect a real contract, or encode a meaningful policy.
+A layer, class, function, file, adapter, wrapper, or re-export MUST provide at least one of:
 
-```text
-class PaymentProcessor:
-    function charge(amount):
-        return gateway.charge(amount)
-```
+- invariant enforcement;
+- boundary validation;
+- ADTO preservation (receives ADTO, passes ADTO — never primitives);
+- policy decision;
+- lifecycle state;
+- side-effect isolation;
+- dependency inversion for a real boundary;
+- integration contract enforcement;
+- observability of a meaningful state transition;
+- a documented public API boundary while the inner implementation remains internal.
 
-**Anti-pattern:**
+A pass-through abstraction that forwards work without owning meaning MUST be removed.
+
+A layer that receives ADTO MUST pass ADTO or a typed extension of it. Unpacking ADTO into individual primitive parameters destroys type safety and scatters context across call sites — it is crystallization noise.
+
+Violation:
 
 ```text
 PaymentController
@@ -231,43 +239,17 @@ PaymentController
   -> PaymentService
   -> PaymentRepository
   -> Gateway
-
-// each layer forwards without validation, transformation, policy, or ownership
 ```
 
-#### Pass-Through Wrapping Rule
+Valid layers are justified by responsibility, not by architectural vocabulary.
 
-A function, method, class, file, or re-export that exists only to invoke another function, method, class, file, or symbol with the same signature is a pass-through.
+### Rule 5 — Use Actor Granularity Deliberately (TIP-005)
 
-Pass-throughs are allowed only when they provide at least one of:
+AIOA uses three actor levels as reasoning boundaries.
 
-1. Validation or invariant enforcement.
-2. Logging, telemetry, or policy enforcement.
-3. Meaningful signature or contract transformation.
-4. A documented public API boundary while the inner function remains internal.
+#### Micro Actor
 
-If none apply, remove the wrapper and call the real behavior directly.
-
-### TIP-005: Quantum Spectrum
-
-**Problem:** Components at different abstraction levels are indistinguishable. Everything becomes a "service", "manager", "helper", or "utility" regardless of size, responsibility, and reuse pressure.
-
-**Pattern:** Use explicit actor levels as reasoning boundaries.
-
-```text
-Micro Actor: Billing
-  Primary business boundary and bounded context.
-
-Nano Actor: ApplyDiscount
-  Reusable business workflow.
-
-Pico Actor: FormatInvoiceNumber
-  Deterministic execution primitive.
-```
-
-#### Micro Actors
-
-Micro Actors define primary business boundaries.
+A **Micro Actor** owns a primary business boundary or bounded context.
 
 Examples:
 
@@ -276,65 +258,60 @@ Examples:
 - Ordering;
 - Customer Management.
 
-Responsibilities:
+A task SHOULD start at the owning Micro Actor.
 
-- own business capabilities;
-- define bounded contexts;
-- contain local business workflows.
+#### Nano Actor
 
-An AI task should usually begin at the owning Micro Actor.
-
-#### Nano Actors
-
-Nano Actors encapsulate reusable business workflows.
+A **Nano Actor** owns a reusable business workflow inside or across Micro Actors.
 
 Examples:
 
-- `ApplyDiscount`;
-- `ValidatePromotion`;
-- `CalculateTax`;
-- `DetermineShippingMethod`.
+- ApplyDiscount;
+- ValidatePromotion;
+- CalculateTax;
+- DetermineShippingMethod.
 
-Responsibilities:
+#### Pico Actor
 
-- coordinate business rules;
-- support reuse across features;
-- prevent meaningful logic duplication.
-
-#### Pico Actors
-
-Pico Actors encapsulate deterministic execution primitives.
+A **Pico Actor** owns a business deterministic execution primitive.
 
 Examples:
 
-- `FindCustomerById`;
-- `FormatInvoiceNumber`;
-- `PublishTelemetryEvent`;
-- `SerializeContract`.
-
-Responsibilities:
-
-- perform one explicit operation;
-- expose minimal ambiguity;
-- contain little or no branching logic.
+- FindCustomerById;
+- FormatInvoiceNumber;
+- PublishTelemetryEvent;
+- SerializeContract.
 
 #### Extraction Rule
 
-Start large. Extract downward only when reuse pressure appears.
+Implementation MUST start in the owning Micro Actor.
 
-1. Implement new behavior inside the owning Micro Actor.
-2. If business behavior becomes reusable, extract it into a Nano Actor.
-3. If deterministic technical behavior becomes reusable, extract it into a Pico Actor.
+Extract downward only when there is real reuse or isolation pressure:
 
-This prevents premature abstraction while preserving future flexibility.
+1. reusable business workflow → Nano Actor;
+2. reusable business deterministic primitive → Pico Actor.
 
-### TIP-006: Declarative Straight-Line Code
+Premature extraction violates AIOA when it increases traversal without adding meaning.
 
-**Problem:** Business logic is buried inside manual execution mechanics: nested branching, loops, retries, locks, transactions, resource scopes, callback chains, and exception tunnels.
+### Rule 6 — Keep Business Logic Declarative and Straight-Line (TIP-006)
 
-The agent must track execution state before it can safely change business behavior.
+Business code SHOULD describe business intent in a linear path.
 
-**Pattern:** Move recurring execution mechanics into explicit reusable constructs. Business code should describe intent in a linear path.
+Recurring execution mechanics MUST be moved into explicit policies, boundaries, libraries, or prepared primitives.
+
+Good candidates:
+
+- validation pipelines;
+- retry policies;
+- timeout policies;
+- transaction boundaries;
+- resource scopes;
+- concurrency limits;
+- result types;
+- collection pipelines;
+- event dispatch and handler binding.
+
+Preferred:
 
 ```text
 retryPolicy = RetryPolicy(maxAttempts=3, backoff="exponential")
@@ -343,7 +320,7 @@ function chargeCustomer(amount):
     return retryPolicy.execute(() => gateway.charge(amount))
 ```
 
-**Anti-pattern:**
+Violation:
 
 ```text
 function chargeCustomer(amount):
@@ -356,39 +333,21 @@ function chargeCustomer(amount):
             sleep(2 ^ attempt)
 ```
 
-#### Execution Policy Rule
+Guard clauses for visible business preconditions are allowed. Manual procedural machinery scattered through business methods is not.
 
-Execution mechanics belong in policies, boundaries, libraries, or prepared primitives, not scattered through business methods.
+### Rule 7 — Kill Loose Input at the Boundary (TIP-007)
 
-Good candidates for declarative primitives:
+Loose external input MUST NOT enter business logic.
 
-- validation pipelines;
-- retry policies;
-- timeout policies;
-- transaction boundaries;
-- resource scopes;
-- concurrency limits;
-- result types;
-- event handlers;
-- collection pipelines.
+A Strict Gateway MUST:
 
-Guard clauses are still useful for visible business preconditions. They solve conditional nesting. TIP-006 targets the broader problem of manual procedural machinery.
+1. accept loose input;
+2. validate shape, required fields, primitive types, enum membership, nullability, ID format, normalization, range checks, and schema version;
+3. reject malformed payloads immediately;
+4. convert valid input into typed DTO contracts;
+5. pass only trusted DTOs to business logic.
 
-### TIP-007: Strict JSON Gateways and Auditable DTOs
-
-**Problem:** Loose JSON, raw dictionaries, nullable structures, and ambiguous payloads leak into business logic. AI agents respond by generating defensive boilerplate everywhere.
-
-**Core rule:** Loose JSON must die at the boundary.
-
-#### Strict JSON Gateway
-
-A Strict JSON Gateway:
-
-1. Accepts loose external input.
-2. Validates it against a strict schema.
-3. Rejects malformed payloads immediately.
-4. Converts valid input into typed DTO contracts.
-5. Passes only trusted DTOs into business logic.
+Example:
 
 ```text
 gateway PromoRequestGateway:
@@ -397,137 +356,73 @@ gateway PromoRequestGateway:
     returns PromoRequest
 ```
 
-After the gateway:
+After the gateway, remaining checks MUST be business checks, such as:
+
+- entity existence;
+- eligibility;
+- authorization;
+- discount compatibility;
+- workflow transition validity.
+
+Violation:
 
 ```text
-function applyPromo(request: PromoRequest):
-    promo = database.findPromo(request.code)
-
-    if promo not found:
-        throw PromoNotFound
-
-    apply(promo, request.customerId)
+function process(data: dict): Result
 ```
 
-The remaining checks are business validation, not technical sanitation.
+After validation, ADTO is the execution context for the full chain, not only the boundary. Every component receives it whole. Converting ADTO to primitive parameters is prohibited.
 
-#### Perimeter Validation Rule
-
-Validate at the perimeter:
-
-- required fields;
-- JSON shape;
-- primitive types;
-- enum membership;
-- ID format;
-- string normalization;
-- basic range checks;
-- schema version compatibility.
-
-Keep in business logic:
-
-- whether an entity exists;
-- whether a customer is eligible;
-- whether a discount is combinable;
-- whether an account may perform an action;
-- whether a workflow transition is valid.
-
-The gateway protects structure. The business layer protects meaning.
-
-#### ADTO Contract
-
-When runtime state provenance matters, use an Auditable DTO (ADTO).
-
-An ADTO is a typed DTO that also records meaningful business state transitions.
-
-An object claimed to be an ADTO must provide:
-
-1. **A deterministic typed contract** - required fields, allowed types, nullability, and structural guarantees are explicit.
-2. **Controlled mutation semantics** - either immutable snapshots or controlled transition methods. The object must not allow untracked state changes.
-3. **Auditability** - a method to record a business-significant state transition.
-4. **History retrieval** - a method to retrieve ordered mutation history.
-5. **Optional provenance** - caller, operation, reason, timestamp, trace ID, or source component when useful.
-
-Example:
+When a component needs additional context, extend the ADTO via inheritance at the construction boundary:
 
 ```text
-structure PropertyChange:
-    propertyName: String
-    oldValue: Any
-    newValue: Any
-
-structure TraceEntry:
-    timestamp: Datetime
-    operation: String
-    callerClass: String
-    callerMethod: String
-    reason: String
-    changes: List[PropertyChange]
-    snapshot: Object
-
-abstract class ADTO:
-    private history: List[TraceEntry] = []
-
-    function recordMutation(operation, reason, changes):
-        history.add(
-            TraceEntry(
-                timestamp = Clock.utcNow(),
-                operation = operation,
-                callerClass = StackTrace.externalClass(),
-                callerMethod = StackTrace.externalMethod(),
-                reason = reason,
-                changes = deepClone(changes),
-                snapshot = deepClone(this)
-            )
-        )
-
-    function mutationHistory(): List[TraceEntry]:
-        return history
+class StudyRunnerSpecADTO(WorkerSpecADTO):
+    """Enriched ADTO — carries all context StudyRunner needs."""
+    base_config: dict
+    tickers: list[str]
+    start_date: str
+    end_date: str
 ```
 
-#### Mutation Slice Rule
+### Rule 8 — Use Auditable DTOs When State Provenance Matters (TIP-007)
 
-ADTOs should record meaningful business transitions, not every setter call.
+A DTO that carries important mutable runtime state MUST be an Auditable DTO.
+
+An ADTO MUST provide:
+
+- a deterministic typed contract;
+- immutable snapshots or controlled transition methods;
+- mutation recording for meaningful business transitions;
+- ordered mutation history retrieval;
+- optional provenance such as caller, reason, timestamp, trace ID, or source component.
+
+ADTOs MUST record meaningful business transitions, not every setter call.
 
 Good mutation slice:
 
 ```text
 operation: ApplyPaymentFailurePolicy
 reason: Failed payment threshold exceeded
-
 changes:
   status: Active -> Suspended
   riskScore: 20 -> 95
 ```
 
-The goal is explainability, not compliance noise.
+The purpose is explainability. Compliance noise violates AIOA when it obscures meaningful state change.
 
-**Anti-patterns:**
+### Rule 9 — Communicate Across Actors Through Events (TIP-008)
 
-```text
-function process(data: dict): Result
-```
+Micro Actors, Nano Actors, and Pico Actors MUST NOT call each other's internal methods directly.
 
-```text
-class Order:
-    _provenance: list  // manually maintained, easy to forget, incomplete
-```
+All cross-actor communication MUST go through the selected event mechanism.
 
-### TIP-008: Event-Driven Integration
+Events MUST be:
 
-**Problem:** Workflows are coupled through direct cross-component calls. A simple business change forces the agent to understand callers, receivers, ordering, retries, side effects, and distributed failure behavior.
-
-**Goal:** Reduce cross-boundary reasoning by communicating through explicit business events.
-
-**Core rule:** Micro Actors, Nano Actors, and Pico Actors must not call each other's methods directly. All cross-actor communication goes through one event mechanism.
-
-Events are contracts. They should be:
-
+- explicit contracts;
 - immutable;
-- typed;
-- versioned when crossing durable or external boundaries;
+- typed or schema-validated;
 - business-oriented;
-- implementation-independent.
+- implementation-independent;
+- versioned when crossing durable or external boundaries.
 
 Examples:
 
@@ -538,27 +433,6 @@ InventoryReserved
 OrderCancelled
 ```
 
-#### Locality Principle
-
-A component should not need to understand how another component performs its work.
-
-It should understand:
-
-- the event it emits;
-- the event it consumes;
-- its own local business rules.
-
-#### Event Choreography Rule
-
-A workflow is choreography-oriented when:
-
-1. The entry point emits a command or fact event and exits.
-2. Each actor subscribes to one or more events.
-3. Actor method calls target only the actor's own dependencies, not another actor's internal behavior.
-4. State transitions are observable as event emissions or ADTO mutation history.
-
-This rule is structural. A workflow violates TIP-008 as soon as one actor invokes another actor's method, regardless of whether the class is named `Service`, `Controller`, `Coordinator`, `Orchestrator`, `Manager`, or `Actor`.
-
 Violation:
 
 ```text
@@ -568,7 +442,7 @@ class OrderService:
         notificationService.sendEmail(user)
 ```
 
-Required actor-to-actor form:
+Required shape:
 
 ```text
 class OrderActor:
@@ -577,38 +451,46 @@ class OrderActor:
 
 class BillingActor:
     @handler(OrderPlaced, PaymentRequested)
-    function requestPayment(event):
+    function requestPayment(event: OrderPlaced): PaymentRequested:
         return PaymentRequested(event.orderId, event.total)
 
 class NotificationActor:
     @handler(OrderPlaced, EmailRequested)
-    function requestEmail(event):
+    function requestEmail(event: OrderPlaced): EmailRequested:
         return EmailRequested(event.customerId, "order placed")
 ```
 
-#### Event Bus Rule
+Returned events SHOULD be auto-published when the selected event mechanism supports it. Otherwise, explicit dispatch MUST be visible in code and covered by tests. Lists of returned events SHOULD be published item by item when supported by the selected mechanism.
 
-Use one event mechanism inside a boundary.
+### Rule 10 — Use One Event Mechanism per Boundary (TIP-008)
 
-Default for a single-process system:
+Each boundary MUST use one selected event mechanism.
 
-- an in-process event bus or dispatcher.
+For a single-process system, the default mechanism SHOULD be an in-process event bus or dispatcher.
 
-If Kafka, RabbitMQ, an actor runtime, or another broker is already the system's event mechanism:
+If the project already uses Kafka, RabbitMQ, an actor runtime, a framework-native domain-event dispatcher, a command bus, a message dispatcher, or another broker, the project SHOULD use that mechanism directly.
 
-- use it directly;
-- do not add a second bus layer only to satisfy the pattern.
+The project MUST NOT add a second bus wrapper only to satisfy AIOA vocabulary.
 
-The technology is an implementation decision. The architectural pattern is explicit event contracts and local handlers.
+The selected mechanism MUST prove:
 
-#### Scope and Allowed Synchronous Calls
+- producers do not call consumer internals;
+- consumers are bound through handlers, subscribers, receivers, or equivalent local dispatch points;
+- contracts are explicit and typed or schema-validated;
+- derived events or state transitions are observable;
+- failure behavior is defined;
+- tests prove the event chain.
 
-The "event bus only" rule applies to actor-to-actor communication.
+A dependency-injected interface call is not an event mechanism unless it dispatches explicit contracts between independently owned actors.
 
-It does not forbid an actor from synchronously calling its own local dependencies, such as:
+### Rule 11 — Allow Local Synchronous Dependencies (TIP-008)
+
+The event-only rule applies only to actor-to-actor communication.
+
+An actor MAY synchronously call dependencies it owns locally, including:
 
 - repositories owned by that actor;
-- gateways to external systems;
+- external-system gateways;
 - policy objects;
 - validators;
 - mappers;
@@ -616,49 +498,15 @@ It does not forbid an actor from synchronously calling its own local dependencie
 - retry policies;
 - telemetry clients.
 
-Those calls are implementation dependencies of the actor, not communication with another actor.
+If a dependency owns independent business behavior, it is an actor and MUST be reached through an event.
 
-If a dependency owns independent business behavior, it is an actor and must be reached through an event.
+Synchronous execution is allowed. Direct actor coupling is not.
 
-Event-Driven Integration does not require every event mechanism to be distributed or asynchronous. An in-process event bus is valid. The strict requirement is actor decoupling through explicit event contracts.
+### Rule 12 — Define Event Failure Semantics Explicitly (TIP-008)
 
-#### Concrete Implementation Patterns
+The event mechanism MUST define failure behavior.
 
-**Event-as-ADTO**
-
-Events that cross meaningful boundaries should be typed DTOs. When provenance matters, make them ADTOs.
-
-```text
-class PaymentRequested extends ADTO:
-    orderId: OrderId
-    amount: Money
-    currency: Currency
-    traceId: TraceId
-    timestamp: Datetime
-```
-
-**Declarative Handler Binding**
-
-```text
-@handler(OrderPlaced, InventoryReserved)
-function reserveInventory(event: OrderPlaced): InventoryReserved
-```
-
-The pipeline builder validates that the declared event type and method annotation match.
-
-**Handler Auto-Publish**
-
-```text
-@handler(OrderPlaced, InventoryReserved)
-function reserveInventory(event: OrderPlaced): InventoryReserved:
-    return InventoryReserved(orderId=event.orderId)
-```
-
-Returned events are published automatically. Lists are published item by item.
-
-**Error Isolation with Continuation**
-
-One failed handler should not silently corrupt the whole pipeline. The event mechanism must define failure behavior explicitly:
+Allowed strategies include:
 
 - log and continue;
 - retry;
@@ -666,28 +514,162 @@ One failed handler should not silently corrupt the whole pipeline. The event mec
 - fail the command;
 - compensate.
 
-Choose based on business semantics. Do not leave it implicit.
+The selected strategy MUST match business semantics.
 
-## Review Checklist
+Implicit event failure behavior violates AIOA.
 
-Use this checklist when reviewing specs, plans, tasks, and code changes.
+### Rule 13 — Lazy-Create Dependencies, Never Pass What Can Be Omitted (TIP-009)
 
-| Principle | Review question | Common violation |
+If it can be omitted — it must be omitted.
+
+If it can be not passed — don't pass it.
+If you can not write it — don't write it.
+
+This applies to: parameters, object creation, code volume, abstractions, comments, configuration options, and ADTO-to-primitive conversion.
+
+Clarifications:
+
+- **Parameters**: An object owns its collaborators. If two parameters overlaps, the inner one MUST be removed.
+
+Violation:
+
+```text
+class OrderProcessor:
+    constructor(orderRepo: OrderRepo):
+        self.orderRepo = orderRepo
+
+    function processOrder(
+        order: Order,
+        logger: Logger | None = None,
+        cache: Cache | None = None,
+        validator: OrderValidator | None = None
+    ):
+        if logger is None:
+            logger = Logger("OrderProcessor")
+        if cache is None:
+            cache = Cache()
+        if validator is None:
+            validator = OrderValidator()
+
+        validator.validate(order)
+        cached = cache.get(order.id)
+        logger.info(f"Processing {order.id}")
+```
+
+Example:
+
+```text
+class OrderProcessor:
+    constructor(orderRepo: OrderRepo):
+        self.orderRepo = orderRepo
+
+    function processOrder(order: Order):
+        logger = Logger("OrderProcessor")
+
+        OrderValidator().validate(order)
+        Cache().get(order.id)
+        logger.info(f"Processing {order.id}")
+```
+
+- **Object creation**: Mutate in place. Do not reconstruct to add one attribute.
+
+Violation:
+
+```text
+type Customer:
+    id: CustomerId
+    name: string
+    email: Email
+    address: Address
+    createdAt: Timestamp
+
+function updateAddress(customer: Customer, newAddress: Address) -> Customer:
+    return Customer(
+        id=customer.id,
+        name=customer.name,
+        email=customer.email,
+        address=newAddress,              // reconstructs entire object for one field
+        createdAt=customer.createdAt
+    )
+```
+
+Example:
+
+```text
+function updateAddress(customer: Customer, newAddress: Address) -> Customer:
+    customer.address = newAddress        // mutate in place
+    return customer
+```
+
+- **ADTO-to-ADTO**: A consumer that receives ADTO MUST receive ADTO. If it needs more context, enrich at boundary via inheritance. Do not unpack. Do not convert to primitives. Do not load config mid-chain.
+
+## 5. Required Proof Artifacts
+
+Every AIOA-aligned spec, plan, task, review, or implementation MUST provide the following proof artifacts:
+
+| Artifact | Required evidence |
+| --- | --- |
+| [Rule 1] Outcome metrics | Customer impact, delivery throughput, defect rate, maintainability measured — not AI usage counts. |
+| [Rule 2] Contracts | DTOs, events, schemas, gateways, and versions when needed. |
+| [Rule 2] Semantic types | Domain-significant identifiers and values are not raw primitives. |
+| [Rule 3] Radius budget | Files, modules, boundaries, dependencies, exclusions. |
+| [Rule 4] Abstraction justification | Each layer, class, or function owns meaning — no pass-through wrappers. |
+| [Rule 5] Boundary ownership | Which Micro Actor owns the behavior. |
+| [Rule 6] Declarative proof | Business logic is straight-line intent — retry, timeout, transaction mechanics are in policies or boundaries. |
+| [Rule 7] Input perimeter | Where loose input is validated and converted. |
+| [Rule 8] State observability | Events, ADTO mutation history, or focused telemetry. |
+| [Rule 9] Cross-actor communication | Event contracts and handlers, with no direct actor method calls. |
+| [Rule 10] Event mechanism selection | One real event mechanism per boundary — producers do not call consumer internals. |
+| [Rule 11] Local dependency scope | Synchronous calls limited to repositories, gateways, policies, validators owned by the actor. |
+| [Rule 12] Failure behavior | Retry, dead-letter, fail, compensate, or continue strategy. |
+| [Rule 13] Dependency discipline | No optional parameters defaulting to None with lazy creation in body. No redundant collaborator parameters. No object reconstruction for single-field mutation. |
+
+Without these artifacts, the work is AIOA-inspired at most. It is not AIOA-conformant.
+
+## 6. Review Checklist
+
+| Rule | Review question | Common violation |
 | --- | --- | --- |
-| TIP-001 | Are AI metrics outcome-oriented? | Measuring prompts, tokens, or AI session count as productivity. |
-| TIP-002 | Are domain concepts represented by semantic types? | User IDs, order IDs, strategy names, or workflow IDs passed as raw strings. |
-| TIP-003 | Can relevant behavior be found locally? | Global `utils`, `helpers`, or mixed `services` modules imported across domains. |
-| TIP-004 | Does each layer add meaning, policy, transformation, or a real boundary? | Pass-through wrappers and forwarding chains. |
-| TIP-005 | Are Micro, Nano, and Pico responsibilities distinguishable? | Everything named `Service`, `Manager`, or `Helper` regardless of abstraction level. |
-| TIP-006 | Is business logic linear and intent-focused? | Manual retry, timeout, transaction, lock, fallback, or nested error mechanics in business methods. |
-| TIP-007 | Does loose input die at a strict boundary? | Raw `dict` / loose JSON crossing into business logic. |
-| TIP-007 | Is important state provenance explainable? | DTOs with important mutable state but no mutation history. |
-| TIP-008 | Do actors communicate only through events? | Micro/Nano/Pico actors calling each other's methods directly. |
-| TIP-008 | Is one event mechanism used per boundary? | Adding a second bus wrapper over an existing broker without architectural value. |
-| Cross-cutting | Are state transitions observable? | Hidden state changes with no event, ADTO history, or focused telemetry. |
+| [Core] Core | Is Crystallization Radius minimized without losing domain meaning? | Small code change requires broad repository traversal. |
+| [Rule 1] Outcomes | Are outcomes measured instead of AI usage counts? | Prompt count, token count, or AI session count used as success metrics. |
+| [Rule 2] Budget | Is the radius budget explicit and respected? | Implementation reads outside the budget without explanation. |
+| [Rule 2] Semantics | Are domain concepts represented by semantic types? | IDs, names, timestamps, symbols, or workflow keys passed as raw strings. |
+| [Rule 3] Locality | Can relevant behavior be found through the owning boundary? | Global `utils`, mixed `services`, shared helper dumping grounds. |
+| [Rule 4] Abstraction | Does each abstraction own meaning? | Pass-through wrappers, forwarding chains, pattern-shaped files. |
+| [Rule 5] Actors | Are Micro, Nano, and Pico responsibilities distinguishable? | Everything named `Service`, `Manager`, or `Helper`. |
+| [Rule 5] Extraction | Was behavior extracted only after real reuse or isolation pressure? | Premature Nano/Pico actors increase traversal. |
+| [Rule 6] Declarative flow | Is business logic intent-focused and straight-line? | Manual retry, lock, timeout, transaction, or callback mechanics in business methods. |
+| [Rule 7] Gateway | Does loose input die at the perimeter? | Raw JSON, `dict`, nullable blobs, or loose payloads in business logic. |
+| [Rule 8] ADTO | Is important mutable state explainable? | DTOs mutate without ordered transition history. |
+| [Rule 9] Events | Do actors communicate only through events? | Actor calls another actor's method directly or through an interface. |
+| [Rule 10] Event mechanism | Is there one real event mechanism per boundary? | Second bus wrapper over an existing broker with no added meaning. |
+| [Rule 11] Local dependencies | Are synchronous calls limited to locally owned dependencies? | A repository/gateway object hides independent business behavior. |
+| [Rule 12] Failure semantics | Is event failure behavior explicit? | Handler failures are implicit or framework-defaulted without business decision. |
+| [Rule 13] Lazy dependencies | Are optional None-default parameters removed? Are collaborators used from self, not re-passed? Is mutation preferred over reconstruction? | Optional params defaulting to None, redundant collaborator parameters, full object reconstruction for one field. |
+| [Rule 4/7] ADTO chain | Does ADTO survive the full execution path? | ADTO unpacked to primitives for internal component. |
+| [General] Conformance | Are claims backed by proof artifacts? | Naming folders after AIOA concepts without evidence. |
 
-## Usage
+## 7. Agent Operating Contract
 
-Templates and commands in this preset reference this file as the canonical AIOA definition.
+When acting as an AI coding agent under AIOA, the agent MUST:
 
-When a project-specific decision conflicts with a generic pattern, document the reason explicitly in the spec or plan. AIOA is an optimization framework, not a substitute for business constraints.
+1. **[Rule 1]** measure outcomes — customer impact, throughput, defect rate — not AI usage counts;
+2. **[Rule 2]** preserve semantic types and domain vocabulary;
+3. **[Rule 2]** use semantic types for all domain-significant values instead of raw primitives;
+4. **[Rule 3]** declare or verify the Crystallization Radius budget;
+5. **[Rule 3]** inspect only the files inside the budget unless expansion is justified;
+6. **[Rule 3]** report any required radius expansion explicitly;
+7. **[Rule 4]** avoid pass-through abstractions — each layer must own meaning;
+8. **[Rule 5]** identify the owning Micro Actor before planning changes;
+9. **[Rule 6]** keep business logic declarative and straight-line;
+10. **[Rule 7]** reject loose input at gateways — validate, convert, pass only typed DTOs;
+11. **[Rule 8]** use Auditable DTOs when mutable state requires provenance;
+12. **[Rule 9]** use events for cross-actor communication — no direct method calls between actors;
+13. **[Rule 10]** use one real event mechanism per boundary;
+14. **[Rule 11]** allow synchronous calls only to locally owned dependencies;
+15. **[Rule 12]** define failure behavior for event chains;
+16. **[Rule 13]** lazy-create dependencies — remove optional None-default params, use own collaborators, mutate in place;
+
+The agent MUST NOT claim AIOA conformance from naming alone.
+
+The agent MUST treat AIOA as a constraint system: smaller context, stronger semantics, explicit boundaries, observable state, and local proof.
