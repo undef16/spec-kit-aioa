@@ -54,6 +54,27 @@ Preserving semantics while scattering behavior creates context explosion.
 
 A design is AIOA-aligned only when both constraints are satisfied.
 
+### 1.3 Omission Principle
+
+AIOA treats every written symbol as a future reasoning cost.
+
+If it can be omitted — it must be omitted.
+
+If it can be not passed — don't pass it.
+
+If you can not write it — don't write it.
+
+Omission is not minimalism for style. It is an operational constraint for AI coding agents.
+
+Every extra parameter, layer, interface, wrapper, provider, factory, re-export, nullable override, injected collaborator, global registration, or configuration hop expands the Crystallization Radius unless it preserves necessary domain meaning or protects a real boundary.
+
+The default architectural action is deletion, not abstraction.
+
+Code must earn its presence by carrying business meaning, enforcing a boundary, preserving semantic integrity, proving state transition, or reducing total traversal.
+
+A construct that exists only because a pattern expects it is crystallization noise.
+
+
 ## 2. Conformance Model
 
 AIOA conformance is evidence-based.
@@ -217,7 +238,7 @@ A layer, class, function, file, adapter, wrapper, or re-export MUST provide at l
 
 - invariant enforcement;
 - boundary validation;
-- ADTO preservation (receives ADTO, passes ADTO — never primitives);
+- contract preservation, including ADTO continuity when Rule 8 applies;
 - policy decision;
 - lifecycle state;
 - side-effect isolation;
@@ -227,8 +248,6 @@ A layer, class, function, file, adapter, wrapper, or re-export MUST provide at l
 - a documented public API boundary while the inner implementation remains internal.
 
 A pass-through abstraction that forwards work without owning meaning MUST be removed.
-
-A layer that receives ADTO MUST pass ADTO or a typed extension of it. Unpacking ADTO into individual primitive parameters destroys type safety and scatters context across call sites — it is crystallization noise.
 
 Violation:
 
@@ -242,6 +261,8 @@ PaymentController
 ```
 
 Valid layers are justified by responsibility, not by architectural vocabulary.
+A class, file, or layer named `Actor`, `Service`, `Handler`, `Gateway`, `Policy`, or `Manager` still violates AIOA when it only forwards work.
+
 
 ### Rule 5 — Use Actor Granularity Deliberately (TIP-005)
 
@@ -344,8 +365,8 @@ A Strict Gateway MUST:
 1. accept loose input;
 2. validate shape, required fields, primitive types, enum membership, nullability, ID format, normalization, range checks, and schema version;
 3. reject malformed payloads immediately;
-4. convert valid input into typed DTO contracts;
-5. pass only trusted DTOs to business logic.
+4. convert valid input into typed DTO or ADTO contracts;
+5. pass only trusted DTOs or ADTOs to business logic.
 
 Example:
 
@@ -370,18 +391,8 @@ Violation:
 function process(data: dict): Result
 ```
 
-After validation, ADTO is the execution context for the full chain, not only the boundary. Every component receives it whole. Converting ADTO to primitive parameters is prohibited.
+If validated input becomes an ADTO, Rule 8 governs the rest of the execution chain.
 
-When a component needs additional context, extend the ADTO via inheritance at the construction boundary:
-
-```text
-class StudyRunnerSpecADTO(WorkerSpecADTO):
-    """Enriched ADTO — carries all context StudyRunner needs."""
-    base_config: dict
-    tickers: list[str]
-    start_date: str
-    end_date: str
-```
 
 ### Rule 8 — Use Auditable DTOs When State Provenance Matters (TIP-007)
 
@@ -408,6 +419,23 @@ changes:
 ```
 
 The purpose is explainability. Compliance noise violates AIOA when it obscures meaningful state change.
+
+#### ADTO Continuity Rule
+
+A consumer that receives an ADTO MUST continue the chain with an ADTO.
+
+If the consumer needs additional context, that context MUST be added at a boundary by creating a more specific ADTO, preferably through inheritance or an equivalent language-native extension mechanism.
+
+Do not unpack an ADTO into primitive parameter chains.
+
+Do not convert an ADTO into loose dictionaries, raw JSON, generic maps, or unrelated DTOs mid-chain.
+
+Do not load configuration, runtime context, or external state mid-chain to compensate for missing ADTO context.
+
+The ADTO is the execution context. Preserve it until the workflow reaches a real boundary, terminal state, or event emission.
+
+Use plain DTOs instead of ADTOs only when thousands of instances are created and audit tracking creates a proven performance cost. In all other cases, important mutable runtime state MUST use ADTO.
+
 
 ### Rule 9 — Communicate Across Actors Through Events (TIP-008)
 
@@ -483,24 +511,49 @@ The selected mechanism MUST prove:
 
 A dependency-injected interface call is not an event mechanism unless it dispatches explicit contracts between independently owned actors.
 
-### Rule 11 — Allow Local Synchronous Dependencies (TIP-008)
+### Rule 11 — Keep Synchronous Calls Inside the Local Ownership Boundary (TIP-008)
 
 The event-only rule applies only to actor-to-actor communication.
 
-An actor MAY synchronously call dependencies it owns locally, including:
+An actor MAY synchronously call a dependency only when that dependency is owned by the same local boundary and does not own independent business behavior.
 
-- repositories owned by that actor;
-- external-system gateways;
-- policy objects;
-- validators;
-- mappers;
-- transaction boundaries;
-- retry policies;
-- telemetry clients.
+A dependency is locally owned only when:
 
-If a dependency owns independent business behavior, it is an actor and MUST be reached through an event.
+1. it is colocated with the actor or declared in the actor's local boundary;
+2. it serves the actor's responsibility directly;
+3. understanding ordinary behavior does not require global container wiring, runtime profile lookup, or unrelated boundary traversal;
+4. it does not make business decisions for another actor;
+5. it does not hide cross-boundary workflow behavior.
 
-Synchronous execution is allowed. Direct actor coupling is not.
+Examples of local dependencies include actor-owned repositories, gateways, policies, validators, mappers, transaction boundaries, retry policies, and telemetry clients.
+
+The category name does not make a dependency local. Ownership does.
+
+If a dependency owns independent business behavior, cross-boundary state, or another actor's policy, it is an actor and MUST be reached through an event.
+
+Synchronous execution is allowed inside the local ownership boundary.
+
+Direct actor coupling is not.
+
+#### Preferred
+
+```text
+class OrderActor:
+    function processOrder(order):
+        OrderValidator().validate(order)
+        OrderPolicy().apply(order)
+        OrderRepository().save(order)
+```
+
+#### Violation
+
+```text
+class OrderActor:
+    function processOrder(order):
+        CustomerPolicy().checkCustomerStatus(order.customerId)
+        BillingRepository().reserveCredit(order.customerId, order.total)
+        NotificationGateway().sendOrderEmail(order.customerId)
+```
 
 ### Rule 12 — Define Event Failure Semantics Explicitly (TIP-008)
 
@@ -518,92 +571,48 @@ The selected strategy MUST match business semantics.
 
 Implicit event failure behavior violates AIOA.
 
-### Rule 13 — Lazy-Create Dependencies, Never Pass What Can Be Omitted (TIP-009)
+
+### Rule 13 — Omit What Does Not Carry Meaning (TIP-009)
+
+AIOA uses omission as an architectural rule.
 
 If it can be omitted — it must be omitted.
 
 If it can be not passed — don't pass it.
+
 If you can not write it — don't write it.
 
-This applies to: parameters, object creation, code volume, abstractions, comments, configuration options, and ADTO-to-primitive conversion.
+An agent MUST treat every additional symbol, parameter, object, layer, interface, factory, provider, wrapper, configuration key, dependency, and file as Crystallization Radius expansion until proven otherwise.
 
-Clarifications:
+A component MUST NOT receive what it can own locally.
 
-- **Parameters**: An object owns its collaborators. If two parameters overlaps, the inner one MUST be removed.
+A method MUST NOT accept what its owner already knows.
 
-Violation:
+A workflow MUST NOT pass what can be derived from the active DTO, ADTO, event, actor state, or local boundary.
 
-```text
-class OrderProcessor:
-    constructor(orderRepo: OrderRepo):
-        self.orderRepo = orderRepo
+An interface MUST NOT be introduced when there is no real boundary, independent implementation, or semantic contract to protect.
 
-    function processOrder(
-        order: Order,
-        logger: Logger | None = None,
-        cache: Cache | None = None,
-        validator: OrderValidator | None = None
-    ):
-        if logger is None:
-            logger = Logger("OrderProcessor")
-        if cache is None:
-            cache = Cache()
-        if validator is None:
-            validator = OrderValidator()
+A factory, provider, builder, or dependency-injection mechanism MUST NOT be introduced when direct local construction is sufficient.
 
-        validator.validate(order)
-        cached = cache.get(order.id)
-        logger.info(f"Processing {order.id}")
-```
+A wrapper MUST NOT be introduced when it only forwards.
 
-Example:
+A parameter MUST NOT exist only for speculative reuse, testing convenience, pattern conformity, or future flexibility.
 
-```text
-class OrderProcessor:
-    constructor(orderRepo: OrderRepo):
-        self.orderRepo = orderRepo
+The only valid reasons to add structure are:
 
-    function processOrder(order: Order):
-        logger = Logger("OrderProcessor")
+1. preserve domain meaning;
+2. enforce a real boundary;
+3. protect a contract;
+4. make state transition observable;
+5. isolate external infrastructure;
+6. reduce total Crystallization Radius.
 
-        OrderValidator().validate(order)
-        Cache().get(order.id)
-        logger.info(f"Processing {order.id}")
-```
+If none apply, omit it.
 
-- **Object creation**: Mutate in place. Do not reconstruct to add one attribute.
-
-Violation:
-
-```text
-type Customer:
-    id: CustomerId
-    name: string
-    email: Email
-    address: Address
-    createdAt: Timestamp
-
-function updateAddress(customer: Customer, newAddress: Address) -> Customer:
-    return Customer(
-        id=customer.id,
-        name=customer.name,
-        email=customer.email,
-        address=newAddress,              // reconstructs entire object for one field
-        createdAt=customer.createdAt
-    )
-```
-
-Example:
-
-```text
-function updateAddress(customer: Customer, newAddress: Address) -> Customer:
-    customer.address = newAddress        // mutate in place
-    return customer
-```
-
-- **ADTO-to-ADTO**: A consumer that receives ADTO MUST receive ADTO. If it needs more context, enrich at boundary via inheritance. Do not unpack. Do not convert to primitives. Do not load config mid-chain.
 
 ## 5. Required Proof Artifacts
+
+These proof artifacts MUST be applied to every class, function, module, actor, gateway, policy, DTO, ADTO, event, handler, adapter, and test touched by the current change inside the active codebase; partial application to only the entry point or generated files is not AIOA-conformant.
 
 Every AIOA-aligned spec, plan, task, review, or implementation MUST provide the following proof artifacts:
 
@@ -612,7 +621,7 @@ Every AIOA-aligned spec, plan, task, review, or implementation MUST provide the 
 | [Rule 1] Outcome metrics | Customer impact, delivery throughput, defect rate, maintainability measured — not AI usage counts. |
 | [Rule 2] Contracts | DTOs, events, schemas, gateways, and versions when needed. |
 | [Rule 2] Semantic types | Domain-significant identifiers and values are not raw primitives. |
-| [Rule 3] Radius budget | Files, modules, boundaries, dependencies, exclusions. |
+| [Core] Radius budget | Files, modules, boundaries, dependencies, exclusions. |
 | [Rule 4] Abstraction justification | Each layer, class, or function owns meaning — no pass-through wrappers. |
 | [Rule 5] Boundary ownership | Which Micro Actor owns the behavior. |
 | [Rule 6] Declarative proof | Business logic is straight-line intent — retry, timeout, transaction mechanics are in policies or boundaries. |
@@ -620,9 +629,9 @@ Every AIOA-aligned spec, plan, task, review, or implementation MUST provide the 
 | [Rule 8] State observability | Events, ADTO mutation history, or focused telemetry. |
 | [Rule 9] Cross-actor communication | Event contracts and handlers, with no direct actor method calls. |
 | [Rule 10] Event mechanism selection | One real event mechanism per boundary — producers do not call consumer internals. |
-| [Rule 11] Local dependency scope | Synchronous calls limited to repositories, gateways, policies, validators owned by the actor. |
+| [Rule 11] Local dependency scope | Synchronous calls are limited to dependencies owned by the same local boundary; dependency category alone is not proof of locality. |
 | [Rule 12] Failure behavior | Retry, dead-letter, fail, compensate, or continue strategy. |
-| [Rule 13] Dependency discipline | No optional parameters defaulting to None with lazy creation in body. No redundant collaborator parameters. No object reconstruction for single-field mutation. |
+| [Rule 13] Omission proof | Every added parameter, object, layer, interface, factory, provider, wrapper, dependency, configuration key, and file is justified by domain meaning, boundary protection, contract preservation, observable state transition, external infrastructure isolation, or reduced total traversal. |
 
 Without these artifacts, the work is AIOA-inspired at most. It is not AIOA-conformant.
 
@@ -632,7 +641,7 @@ Without these artifacts, the work is AIOA-inspired at most. It is not AIOA-confo
 | --- | --- | --- |
 | [Core] Core | Is Crystallization Radius minimized without losing domain meaning? | Small code change requires broad repository traversal. |
 | [Rule 1] Outcomes | Are outcomes measured instead of AI usage counts? | Prompt count, token count, or AI session count used as success metrics. |
-| [Rule 2] Budget | Is the radius budget explicit and respected? | Implementation reads outside the budget without explanation. |
+| [Core] Budget | Is the radius budget explicit and respected? | Implementation reads outside the budget without explanation. |
 | [Rule 2] Semantics | Are domain concepts represented by semantic types? | IDs, names, timestamps, symbols, or workflow keys passed as raw strings. |
 | [Rule 3] Locality | Can relevant behavior be found through the owning boundary? | Global `utils`, mixed `services`, shared helper dumping grounds. |
 | [Rule 4] Abstraction | Does each abstraction own meaning? | Pass-through wrappers, forwarding chains, pattern-shaped files. |
@@ -645,8 +654,8 @@ Without these artifacts, the work is AIOA-inspired at most. It is not AIOA-confo
 | [Rule 10] Event mechanism | Is there one real event mechanism per boundary? | Second bus wrapper over an existing broker with no added meaning. |
 | [Rule 11] Local dependencies | Are synchronous calls limited to locally owned dependencies? | A repository/gateway object hides independent business behavior. |
 | [Rule 12] Failure semantics | Is event failure behavior explicit? | Handler failures are implicit or framework-defaulted without business decision. |
-| [Rule 13] Lazy dependencies | Are optional None-default parameters removed? Are collaborators used from self, not re-passed? Is mutation preferred over reconstruction? | Optional params defaulting to None, redundant collaborator parameters, full object reconstruction for one field. |
-| [Rule 4/7] ADTO chain | Does ADTO survive the full execution path? | ADTO unpacked to primitives for internal component. |
+| [Rule 13] Omission | Does every added symbol, parameter, object, layer, interface, factory, provider, wrapper, dependency, configuration key, and file carry meaning or reduce total traversal? | Pattern scaffolding, speculative flexibility, redundant parameters, unnecessary interfaces, provider/factory noise, optional overrides, or dependency passing where local ownership is sufficient. |
+| [Rule 8] ADTO chain | Does ADTO survive the full execution path? | ADTO unpacked to primitives for internal component. |
 | [General] Conformance | Are claims backed by proof artifacts? | Naming folders after AIOA concepts without evidence. |
 
 ## 7. Agent Operating Contract
@@ -656,9 +665,9 @@ When acting as an AI coding agent under AIOA, the agent MUST:
 1. **[Rule 1]** measure outcomes — customer impact, throughput, defect rate — not AI usage counts;
 2. **[Rule 2]** preserve semantic types and domain vocabulary;
 3. **[Rule 2]** use semantic types for all domain-significant values instead of raw primitives;
-4. **[Rule 3]** declare or verify the Crystallization Radius budget;
-5. **[Rule 3]** inspect only the files inside the budget unless expansion is justified;
-6. **[Rule 3]** report any required radius expansion explicitly;
+4. **[Core]** declare or verify the Crystallization Radius budget;
+5. **[Core]** inspect only the files inside the budget unless expansion is justified;
+6. **[Core]** report any required radius expansion explicitly;
 7. **[Rule 4]** avoid pass-through abstractions — each layer must own meaning;
 8. **[Rule 5]** identify the owning Micro Actor before planning changes;
 9. **[Rule 6]** keep business logic declarative and straight-line;
@@ -668,8 +677,14 @@ When acting as an AI coding agent under AIOA, the agent MUST:
 13. **[Rule 10]** use one real event mechanism per boundary;
 14. **[Rule 11]** allow synchronous calls only to locally owned dependencies;
 15. **[Rule 12]** define failure behavior for event chains;
-16. **[Rule 13]** lazy-create dependencies — remove optional None-default params, use own collaborators, mutate in place;
+16. **[Rule 13]** omit everything that does not carry meaning — do not add parameters, wrappers, interfaces, factories, providers, dependencies, config hops, or files unless they preserve semantics, protect a boundary, prove state, isolate external infrastructure, or reduce total traversal;
 
 The agent MUST NOT claim AIOA conformance from naming alone.
 
 The agent MUST treat AIOA as a constraint system: smaller context, stronger semantics, explicit boundaries, observable state, and local proof.
+
+## 8. Usage
+
+Templates, commands, skills, and generated tasks MUST treat this file as the canonical AIOA definition.
+
+Use the project's existing language, framework, and runtime capabilities, but do not weaken AIOA constraints.
