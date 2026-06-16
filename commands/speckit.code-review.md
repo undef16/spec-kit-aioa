@@ -14,19 +14,13 @@ description: "Post-implementation code review — scans generated source files a
 
 Scan the project directory recursively for source files. Use the project's configured language patterns (e.g., glob patterns for source extensions). Skip build artifacts, dependencies, and generated directories.
 
-### Step 1.5: Load Language-Specific Examples
 
-Detect the project's primary language and load the corresponding examples directory:
-- **Python**: `docs/py_examples/` — reference implementations for all TIPs
-- **Other languages**: `docs/<language>_examples/` — equivalent TIP demonstrations
+### Step 2: Run Rule Checks Against Source Code
 
-Use these as concrete reference during code review. Compare implementation patterns, naming conventions, and structural choices against the examples.
-
-### Step 2: Run TIP Checks Against Source Code
-
-1. Read `docs/AIOA.md` to extract all TIP definitions, patterns, anti-patterns, and detection categories
-2. For each TIP, check source code against its detection categories using AST/pattern analysis
-3. Report violations with file:line references
+1. Read `docs/AIOA.md` and dynamically extract Rules → TIP mapping by parsing the pattern `### Rule {N} — {Rule Name} (TIP-{M})` from sections 4+. Use the full title text as the Rule Name (e.g. `### Rule 2 — Protect Domain Concepts with Semantic Types (TIP-002)` → Rule-2, TIP-002).
+2. Also include the **ADTO Continuity Rule** as a separate Rule entry, mapping to TIP-007 (same TIP as Rule-8). It is documented in AIOA.md as `#### ADTO Continuity Rule` under the Rule 8 section.
+3. For each extracted Rule, check source code against its detection categories using AST/pattern analysis
+4. Report violations with file:line references
 
 ### Step 3: Generate Code Review Report
 
@@ -36,20 +30,20 @@ Format the report:
 ## AIOA Code Review Report
 {date}, Project: {project_name}
 
-### TIP Results
-| TIP | Verdict | Violations |
-|-----|---------|------------|
-| {TIP-ID}: {TIP Name} | PASS/FAIL | {n} |
-... (one row per TIP found in AIOA.md)
+### Rule Results
+| Rule | TIP | Verdict | Violations |
+|------|-----|---------|------------|
+| {Rule-N}: {Rule Name} | {TIP-N}: {TIP Name} | PASS/FAIL | {n} |
+... (one row per Rule found in AIOA.md)
 
 ### Violation Details
 
-**TIP-{N}: {TIP Name} — FAIL**
+**Rule-{N}: {Rule Name} — FAIL** (TIP-{M}: {TIP Name})
 - {file}:{line} — {description of violation}
 
 ### Summary
 - Files scanned: {n}
-- Total TIPs: {n}
+- Total Rules: {n}
 - Passed: {n}
 - Failed: {n}
 - Blocking: {YES/NO}
@@ -57,12 +51,12 @@ Format the report:
 
 ### Step 4: Determine Verdict
 
-- **ALL TIPs PASS** → Output:
+- **ALL Rules PASS** → Output:
   ```
   ## AIOA Code Review: PASS ✅
-  Implementation passes all AIOA TIP checks.
+  Implementation passes all AIOA Rule checks.
   ```
-- **ANY TIP FAIL** → Output:
+- **ANY Rule FAIL** → Output:
   ```
   ## AIOA Code Review: FAIL ❌
   **Implementation BLOCKED.**
@@ -103,6 +97,6 @@ After sync, append to the code review report:
 1. **Scan ALL source files.** Do not hardcode file paths — glob for source files using the project's language patterns.
 2. **Skip generated directories.** Build artifacts, dependencies, and generated code.
 3. **Be specific.** For each violation, include file path and line number.
-4. **Be deterministic.** No "partial" verdicts — only PASS or FAIL per TIP.
-5. **Do not skip.** Execute every TIP check completely.
+4. **Be deterministic.** No "partial" verdicts — only PASS or FAIL per Rule.
+5. **Do not skip.** Execute every Rule check completely.
 6. **Create report.** Save `code-review-report.md` in the project root with the full report.

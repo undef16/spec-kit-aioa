@@ -22,21 +22,15 @@ Scan the entire project directory recursively. Find ALL `*.md` files:
 
 Do NOT hardcode a file list — discover all `.md` files dynamically.
 
-### Step 1.5: Load Language-Specific Examples
 
-Detect the project's primary language and load the corresponding examples directory:
-- **Python**: `docs/py_examples/` — contains working TIP implementations (`adto.py`, `event_bus.py`, `events.py`, `fee_policy.py`, `identifiers.py`)
-- **Other languages**: `docs/<language>_examples/` — equivalent implementations following the same file-per-TIP structure
+### Step 2: Run Rule Checks
 
-Use these examples as ground truth when validating TIP compliance. Compare the project's implementation patterns against the reference examples.
-
-### Step 2: Run TIP Checks
-
-1. Read `docs/AIOA.md` to extract all TIP definitions, patterns, anti-patterns, and detection categories
-2. For each TIP, check all `.md` files against its detection categories
-3. Record **Evidence** — what was found
-4. Record **Violations** (if any) — specific files/lines
-5. Assign **Verdict**: PASS or FAIL
+1. Read `docs/AIOA.md` and dynamically extract Rules → TIP mapping by parsing the pattern `### Rule {N} — {Rule Name} (TIP-{M})` from sections 4+. Use the full title text as the Rule Name (e.g. `### Rule 2 — Protect Domain Concepts with Semantic Types (TIP-002)` → Rule-2, TIP-002).
+2. Also include the **ADTO Continuity Rule** as a separate Rule entry, mapping to TIP-007 (same TIP as Rule-8). It is documented in AIOA.md as `#### ADTO Continuity Rule` under the Rule 8 section.
+3. For each extracted Rule, check all `.md` files against its detection categories defined in AIOA.md
+4. Record **Evidence** — what was found
+5. Record **Violations** (if any) — specific files/lines
+6. Assign **Verdict**: PASS or FAIL per Rule
 
 ### Step 3: Generate Validation Report
 
@@ -46,19 +40,19 @@ Format the report:
 ## AIOA Validation Report
 {date}, Project: {project_name}
 
-### TIP Results
-| TIP | Verdict | Violations |
-|-----|---------|------------|
-| {TIP-ID}: {TIP Name} | PASS/FAIL | {n} |
-... (one row per TIP found in AIOA.md)
+### Rule Results
+| Rule | TIP | Verdict | Violations |
+|------|-----|---------|------------|
+| {Rule-N}: {Rule Name} | {TIP-N}: {TIP Name} | PASS/FAIL | {n} |
+... (one row per Rule found in AIOA.md)
 
 ### Violation Details
 
-**TIP-{N}: {TIP Name} — FAIL**
+**Rule-{N}: {Rule Name} — FAIL** (TIP-{M}: {TIP Name})
 - {file}:{line} — {description of violation}
 
 ### Summary
-- Total TIPs: {n}
+- Total Rules: {n}
 - Passed: {n}
 - Failed: {n}
 - Blocking: {YES/NO}
@@ -66,12 +60,12 @@ Format the report:
 
 ### Step 4: Determine Verdict
 
-- **ALL TIPs PASS** → Output:
+- **ALL Rules PASS** → Output:
   ```
   ## AIOA Compliance: PASS ✅
   Proceeding to implementation.
   ```
-- **ANY TIP FAIL** → Output:
+- **ANY Rule FAIL** → Output:
   ```
   ## AIOA Compliance: FAIL ❌
   **Implementation BLOCKED.** 

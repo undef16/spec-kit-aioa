@@ -29,9 +29,6 @@ AIOA is not a separate check — it IS the architecture. Apply TIPs directly whe
 
 - Apply AIOA TIPs directly to the specification. For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md).
 
-- Reference language-specific examples when designing architecture:
-  - **Python**: `docs/py_examples/` — shows concrete TIP implementations (ADTO base class, typed event bus, strategy pattern, domain identifiers)
-  - **Other languages**: `docs/<language>_examples/` — create equivalent examples following the same TIP structure
 
 ### Step 3: Generate Specification
 

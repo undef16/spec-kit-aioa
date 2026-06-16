@@ -1,3 +1,5 @@
-AI-Native-Crystallization
+AI-Native-Crystallization/
 .junk
 __pycache__
+py_examples/
+pyproject.toml

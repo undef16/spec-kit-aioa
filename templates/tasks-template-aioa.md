@@ -18,8 +18,5 @@ Task design rules:
 - Code review syncs these signatures with actual implementation
 - For the full list of TIPs and their definitions, see [AIOA.md](../docs/AIOA.md)
 
-Language-specific examples:
-- **Python**: Reference `docs/py_examples/` — concrete implementations of all TIPs (ADTO, event bus, fee policies, typed identifiers)
-- For other languages: create `docs/<language>_examples/` with equivalent implementations following the same TIP structure
 
 {{CORE_TEMPLATE}}
