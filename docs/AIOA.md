@@ -135,27 +135,9 @@ A well-structured modular application can have a smaller Crystallization Radius 
 
 AIOA evaluates how software is understood and safely modified, not where it is deployed.
 
-## 4. AIOA Design Rules
+## 4. Technical Implementation Patterns
 
-### Rule 1 — Measure Outcomes, Not AI Usage (TIP-001)
-
-AI usage is not a productivity KPI.
-
-Teams MUST NOT measure prompt count, token count, AI session count, or time spent in AI tools as success metrics.
-
-Teams SHOULD measure:
-
-- customer impact;
-- delivery throughput;
-- defect rate;
-- maintainability;
-- decision quality;
-- verification speed;
-- reduction in required context traversal.
-
-Token efficiency is an architectural property, not a vanity metric.
-
-### Rule 2 — Protect Domain Concepts with Semantic Types (TIP-002)
+### TIP-002: Semantic Collision - The Erasure of Domain Boundaries
 
 Any domain-significant value MUST use a semantic type instead of a raw primitive.
 
@@ -198,7 +180,7 @@ getUser(paymentId)
 
 Syntactic correctness does not protect semantic correctness.
 
-### Rule 3 — Preserve Repository Locality (TIP-003)
+### TIP-003: Repository Search Is the Real Bottleneck in AI Coding Agents
 
 Code MUST be organized so ordinary changes are discoverable through narrow, explicit structural paths.
 
@@ -230,7 +212,7 @@ The repository MUST avoid:
 
 Shared code is allowed only when it is cohesive, explicitly owned, and does not erase domain meaning.
 
-### Rule 4 — Remove Crystallization Noise (TIP-004)
+### TIP-004: Code Crystallization - Reducing Architectural Indirection
 
 An abstraction is valid only when it owns meaning.
 
@@ -238,7 +220,7 @@ A layer, class, function, file, adapter, wrapper, or re-export MUST provide at l
 
 - invariant enforcement;
 - boundary validation;
-- contract preservation, including ADTO continuity when Rule 8 applies;
+- contract preservation, including ADTO continuity when TIP-007 applies;
 - policy decision;
 - lifecycle state;
 - side-effect isolation;
@@ -264,7 +246,7 @@ Valid layers are justified by responsibility, not by architectural vocabulary.
 A class, file, or layer named `Actor`, `Service`, `Handler`, `Gateway`, `Policy`, or `Manager` still violates AIOA when it only forwards work.
 
 
-### Rule 5 — Use Actor Granularity Deliberately (TIP-005)
+### TIP-005: The Quantum Spectrum — Controlling Component Crystallization Radius
 
 AIOA uses three actor levels as reasoning boundaries.
 
@@ -303,7 +285,7 @@ Examples:
 - PublishTelemetryEvent;
 - SerializeContract.
 
-#### Extraction Rule
+#### Extraction Guidance
 
 Implementation MUST start in the owning Micro Actor.
 
@@ -314,7 +296,7 @@ Extract downward only when there is real reuse or isolation pressure:
 
 Premature extraction violates AIOA when it increases traversal without adding meaning.
 
-### Rule 6 — Keep Business Logic Declarative and Straight-Line (TIP-006)
+### TIP-006: Declarative Straight-Line Code - Reducing Control-Flow Crystallization Radius
 
 Business code SHOULD describe business intent in a linear path.
 
@@ -356,7 +338,7 @@ function chargeCustomer(amount):
 
 Guard clauses for visible business preconditions are allowed. Manual procedural machinery scattered through business methods is not.
 
-### Rule 7 — Kill Loose Input at the Boundary (TIP-007)
+### TIP-007: Strict JSON Gateways and Auditable DTOs - Stop Defensive Programming in Business Logic
 
 Loose external input MUST NOT enter business logic.
 
@@ -391,12 +373,7 @@ Violation:
 function process(data: dict): Result
 ```
 
-If validated input becomes an ADTO, Rule 8 governs the rest of the execution chain.
-
-
-### Rule 8 — Use Auditable DTOs When State Provenance Matters (TIP-007)
-
-A DTO that carries important mutable runtime state MUST be an Auditable DTO.
+DTOs are deterministic boundary contracts. When runtime state provenance matters, a DTO MUST be extended into an Auditable DTO.
 
 An ADTO MUST provide:
 
@@ -420,7 +397,7 @@ changes:
 
 The purpose is explainability. Compliance noise violates AIOA when it obscures meaningful state change.
 
-#### ADTO Continuity Rule
+#### ADTO Continuity Requirement
 
 A consumer that receives an ADTO MUST continue the chain with an ADTO.
 
@@ -437,11 +414,21 @@ The ADTO is the execution context. Preserve it until the workflow reaches a real
 Use plain DTOs instead of ADTOs only when thousands of instances are created and audit tracking creates a proven performance cost. In all other cases, important mutable runtime state MUST use ADTO.
 
 
-### Rule 9 — Communicate Across Actors Through Events (TIP-008)
+### TIP-008: Event-Driven Integration — Reducing Cross-Boundary Reasoning
 
-Micro Actors, Nano Actors, and Pico Actors MUST NOT call each other's internal methods directly.
+Event-Driven Integration separates execution into independent business reactions.
 
-All cross-actor communication MUST go through the selected event mechanism.
+#### Locality Principle
+
+A component SHOULD only understand:
+
+- the event it emits;
+- the event it consumes;
+- its own local business rules.
+
+A component MUST NOT depend on another component's internal methods, execution order, storage model, or implementation details unless business requirements make direct coordination necessary.
+
+#### Event Contracts
 
 Events MUST be:
 
@@ -461,61 +448,74 @@ InventoryReserved
 OrderCancelled
 ```
 
-Violation:
+Events MUST describe business facts or intentions.
 
-```text
-class OrderService:
-    function placeOrder(cart):
-        billingService.applyCharge(amount)
-        notificationService.sendEmail(user)
-```
+Events MUST NOT expose implementation details.
 
-Required shape:
+#### Event Choreography
 
-```text
-class OrderActor:
-    function placeOrder(cart):
-        return OrderPlaced(orderId, customerId, total)
+Prefer choreography over orchestration when autonomous reactions are sufficient.
 
-class BillingActor:
-    @handler(OrderPlaced, PaymentRequested)
-    function requestPayment(event: OrderPlaced): PaymentRequested:
-        return PaymentRequested(event.orderId, event.total)
+Use orchestration only when strong consistency, immediate response, transactional guarantees, or explicit business workflow control require it.
 
-class NotificationActor:
-    @handler(OrderPlaced, EmailRequested)
-    function requestEmail(event: OrderPlaced): EmailRequested:
-        return EmailRequested(event.customerId, "order placed")
-```
+#### Internal Events
 
-Returned events SHOULD be auto-published when the selected event mechanism supports it. Otherwise, explicit dispatch MUST be visible in code and covered by tests. Lists of returned events SHOULD be published item by item when supported by the selected mechanism.
+Single-process systems MAY use:
 
-### Rule 10 — Use One Event Mechanism per Boundary (TIP-008)
+- in-memory event buses;
+- local event dispatchers;
+- actor frameworks;
+- event streams;
+- distributed event brokers.
 
 Each boundary MUST use one selected event mechanism.
 
-For a single-process system, the default mechanism SHOULD be an in-process event bus or dispatcher.
-
-If the project already uses Kafka, RabbitMQ, an actor runtime, a framework-native domain-event dispatcher, a command bus, a message dispatcher, or another broker, the project SHOULD use that mechanism directly.
-
 The project MUST NOT add a second bus wrapper only to satisfy AIOA vocabulary.
 
-The selected mechanism MUST prove:
+Producers and consumers MUST communicate through explicit event contracts, not through each other's internals.
 
-- producers do not call consumer internals;
-- consumers are bound through handlers, subscribers, receivers, or equivalent local dispatch points;
-- contracts are explicit and typed or schema-validated;
-- derived events or state transitions are observable;
-- failure behavior is defined;
-- tests prove the event chain.
+DI is not an event mechanism.
 
-A dependency-injected interface call is not an event mechanism unless it dispatches explicit contracts between independently owned actors.
+A dependency-injected interface call remains direct actor coupling unless it publishes or dispatches explicit event contracts between independently owned actors.
 
-### Rule 11 — Keep Synchronous Calls Inside the Local Ownership Boundary (TIP-008)
+#### Implementation Requirements
 
-The event-only rule applies only to actor-to-actor communication.
+Event classes MUST be explicit typed contracts.
 
-An actor MAY synchronously call a dependency only when that dependency is owned by the same local boundary and does not own independent business behavior.
+Events SHOULD extend ADTO (TIP-007) when they cross actor, process, durable, or external boundaries.
+
+Handlers MUST declare:
+
+- consumed event type;
+- produced event type or terminal result;
+- failure strategy.
+
+Handler wiring MUST be explicit in code, generated from declarations, or discoverable by deterministic introspection.
+
+A handler MUST NOT manually call another actor to continue the workflow.
+
+A handler MAY return an event or a list of events.
+
+Returned events MUST be published by the selected mechanism, either automatically or by explicit dispatch visible in code and covered by tests.
+
+The selected event mechanism MUST define handler failure behavior:
+
+- continue;
+- retry;
+- dead-letter;
+- fail command;
+- compensate.
+
+#### Non-Goals
+
+Event-Driven Integration MUST NOT require:
+
+- distributed deployment;
+- asynchronous execution for every interaction;
+- replacing valid RPC or orchestration;
+- event boundaries that increase reasoning complexity.
+
+Direct calls are allowed inside the local ownership boundary.
 
 A dependency is locally owned only when:
 
@@ -525,54 +525,11 @@ A dependency is locally owned only when:
 4. it does not make business decisions for another actor;
 5. it does not hide cross-boundary workflow behavior.
 
-Examples of local dependencies include actor-owned repositories, gateways, policies, validators, mappers, transaction boundaries, retry policies, and telemetry clients.
-
-The category name does not make a dependency local. Ownership does.
-
-If a dependency owns independent business behavior, cross-boundary state, or another actor's policy, it is an actor and MUST be reached through an event.
-
-Synchronous execution is allowed inside the local ownership boundary.
-
-Direct actor coupling is not.
-
-#### Preferred
-
-```text
-class OrderActor:
-    function processOrder(order):
-        OrderValidator().validate(order)
-        OrderPolicy().apply(order)
-        OrderRepository().save(order)
-```
-
-#### Violation
-
-```text
-class OrderActor:
-    function processOrder(order):
-        CustomerPolicy().checkCustomerStatus(order.customerId)
-        BillingRepository().reserveCredit(order.customerId, order.total)
-        NotificationGateway().sendOrderEmail(order.customerId)
-```
-
-### Rule 12 — Define Event Failure Semantics Explicitly (TIP-008)
-
-The event mechanism MUST define failure behavior.
-
-Allowed strategies include:
-
-- log and continue;
-- retry;
-- dead-letter;
-- fail the command;
-- compensate.
-
-The selected strategy MUST match business semantics.
-
-Implicit event failure behavior violates AIOA.
+If a dependency owns independent business behavior, cross-boundary state, or another actor's policy, it is an actor and SHOULD be reached through an event boundary unless business requirements justify direct coordination.
 
 
-### Rule 13 — Omit What Does Not Carry Meaning (TIP-009)
+
+### TIP-009 (Draft) — Omit What Does Not Carry Meaning
 
 AIOA uses omission as an architectural rule.
 
@@ -618,66 +575,51 @@ Every AIOA-aligned spec, plan, task, review, or implementation MUST provide the 
 
 | Artifact | Required evidence |
 | --- | --- |
-| [Rule 1] Outcome metrics | Customer impact, delivery throughput, defect rate, maintainability measured — not AI usage counts. |
-| [Rule 2] Contracts | DTOs, events, schemas, gateways, and versions when needed. |
-| [Rule 2] Semantic types | Domain-significant identifiers and values are not raw primitives. |
+| [TIP-002] Contracts | DTOs, events, schemas, gateways, and versions when needed. |
+| [TIP-002] Semantic types | Domain-significant identifiers and values are not raw primitives. |
 | [Core] Radius budget | Files, modules, boundaries, dependencies, exclusions. |
-| [Rule 4] Abstraction justification | Each layer, class, or function owns meaning — no pass-through wrappers. |
-| [Rule 5] Boundary ownership | Which Micro Actor owns the behavior. |
-| [Rule 6] Declarative proof | Business logic is straight-line intent — retry, timeout, transaction mechanics are in policies or boundaries. |
-| [Rule 7] Input perimeter | Where loose input is validated and converted. |
-| [Rule 8] State observability | Events, ADTO mutation history, or focused telemetry. |
-| [Rule 9] Cross-actor communication | Event contracts and handlers, with no direct actor method calls. |
-| [Rule 10] Event mechanism selection | One real event mechanism per boundary — producers do not call consumer internals. |
-| [Rule 11] Local dependency scope | Synchronous calls are limited to dependencies owned by the same local boundary; dependency category alone is not proof of locality. |
-| [Rule 12] Failure behavior | Retry, dead-letter, fail, compensate, or continue strategy. |
-| [Rule 13] Omission proof | Every added parameter, object, layer, interface, factory, provider, wrapper, dependency, configuration key, and file is justified by domain meaning, boundary protection, contract preservation, observable state transition, external infrastructure isolation, or reduced total traversal. |
+| [TIP-004] Abstraction justification | Each layer, class, or function owns meaning — no pass-through wrappers. |
+| [TIP-005] Boundary ownership | Which Micro Actor owns the behavior. |
+| [TIP-006] Declarative proof | Business logic is straight-line intent — retry, timeout, transaction mechanics are in policies or boundaries. |
+| [TIP-007] Input perimeter and state provenance | Where loose input is validated and converted; where ADTO mutation history captures important runtime state transitions. |
+| [TIP-008] Event-driven integration | Event contracts, handlers, choreography, local reasoning boundary, and explicit failure behavior. |
+| [TIP-009 (Draft)] Omission proof | Every added parameter, object, layer, interface, factory, provider, wrapper, dependency, configuration key, and file is justified by domain meaning, boundary protection, contract preservation, observable state transition, external infrastructure isolation, or reduced total traversal. |
 
 Without these artifacts, the work is AIOA-inspired at most. It is not AIOA-conformant.
 
 ## 6. Review Checklist
 
-| Rule | Review question | Common violation |
+| TIP | Review question | Common violation |
 | --- | --- | --- |
 | [Core] Core | Is Crystallization Radius minimized without losing domain meaning? | Small code change requires broad repository traversal. |
-| [Rule 1] Outcomes | Are outcomes measured instead of AI usage counts? | Prompt count, token count, or AI session count used as success metrics. |
 | [Core] Budget | Is the radius budget explicit and respected? | Implementation reads outside the budget without explanation. |
-| [Rule 2] Semantics | Are domain concepts represented by semantic types? | IDs, names, timestamps, symbols, or workflow keys passed as raw strings. |
-| [Rule 3] Locality | Can relevant behavior be found through the owning boundary? | Global `utils`, mixed `services`, shared helper dumping grounds. |
-| [Rule 4] Abstraction | Does each abstraction own meaning? | Pass-through wrappers, forwarding chains, pattern-shaped files. |
-| [Rule 5] Actors | Are Micro, Nano, and Pico responsibilities distinguishable? | Everything named `Service`, `Manager`, or `Helper`. |
-| [Rule 5] Extraction | Was behavior extracted only after real reuse or isolation pressure? | Premature Nano/Pico actors increase traversal. |
-| [Rule 6] Declarative flow | Is business logic intent-focused and straight-line? | Manual retry, lock, timeout, transaction, or callback mechanics in business methods. |
-| [Rule 7] Gateway | Does loose input die at the perimeter? | Raw JSON, `dict`, nullable blobs, or loose payloads in business logic. |
-| [Rule 8] ADTO | Is important mutable state explainable? | DTOs mutate without ordered transition history. |
-| [Rule 9] Events | Do actors communicate only through events? | Actor calls another actor's method directly or through an interface. |
-| [Rule 10] Event mechanism | Is there one real event mechanism per boundary? | Second bus wrapper over an existing broker with no added meaning. |
-| [Rule 11] Local dependencies | Are synchronous calls limited to locally owned dependencies? | A repository/gateway object hides independent business behavior. |
-| [Rule 12] Failure semantics | Is event failure behavior explicit? | Handler failures are implicit or framework-defaulted without business decision. |
-| [Rule 13] Omission | Does every added symbol, parameter, object, layer, interface, factory, provider, wrapper, dependency, configuration key, and file carry meaning or reduce total traversal? | Pattern scaffolding, speculative flexibility, redundant parameters, unnecessary interfaces, provider/factory noise, optional overrides, or dependency passing where local ownership is sufficient. |
-| [Rule 8] ADTO chain | Does ADTO survive the full execution path? | ADTO unpacked to primitives for internal component. |
+| [TIP-002] Semantics | Are domain concepts represented by semantic types? | IDs, names, timestamps, symbols, or workflow keys passed as raw strings. |
+| [TIP-003] Locality | Can relevant behavior be found through the owning boundary? | Global `utils`, mixed `services`, shared helper dumping grounds. |
+| [TIP-004] Abstraction | Does each abstraction own meaning? | Pass-through wrappers, forwarding chains, pattern-shaped files. |
+| [TIP-005] Actors | Are Micro, Nano, and Pico responsibilities distinguishable? | Everything named `Service`, `Manager`, or `Helper`. |
+| [TIP-005] Extraction | Was behavior extracted only after real reuse or isolation pressure? | Premature Nano/Pico actors increase traversal. |
+| [TIP-006] Declarative flow | Is business logic intent-focused and straight-line? | Manual retry, lock, timeout, transaction, or callback mechanics in business methods. |
+| [TIP-007] Gateway and ADTO | Does loose input die at the perimeter, and is important mutable state explainable? | Raw JSON, `dict`, nullable blobs, loose payloads in business logic, or DTOs mutating without ordered transition history. |
+| [TIP-008] Events | Do event boundaries reduce cross-boundary reasoning? | Components understand each other's implementation details or hide cross-boundary workflow behavior behind direct calls. |
+| [TIP-009 (Draft)] Omission | Does every added symbol, parameter, object, layer, interface, factory, provider, wrapper, dependency, configuration key, and file carry meaning or reduce total traversal? | Pattern scaffolding, speculative flexibility, redundant parameters, unnecessary interfaces, provider/factory noise, optional overrides, or dependency passing where local ownership is sufficient. |
+| [TIP-007] ADTO chain | Does ADTO survive the full execution path? | ADTO unpacked to primitives for internal component. |
 | [General] Conformance | Are claims backed by proof artifacts? | Naming folders after AIOA concepts without evidence. |
 
 ## 7. Agent Operating Contract
 
 When acting as an AI coding agent under AIOA, the agent MUST:
 
-1. **[Rule 1]** measure outcomes — customer impact, throughput, defect rate — not AI usage counts;
-2. **[Rule 2]** preserve semantic types and domain vocabulary;
-3. **[Rule 2]** use semantic types for all domain-significant values instead of raw primitives;
-4. **[Core]** declare or verify the Crystallization Radius budget;
-5. **[Core]** inspect only the files inside the budget unless expansion is justified;
-6. **[Core]** report any required radius expansion explicitly;
-7. **[Rule 4]** avoid pass-through abstractions — each layer must own meaning;
-8. **[Rule 5]** identify the owning Micro Actor before planning changes;
-9. **[Rule 6]** keep business logic declarative and straight-line;
-10. **[Rule 7]** reject loose input at gateways — validate, convert, pass only typed DTOs;
-11. **[Rule 8]** use Auditable DTOs when mutable state requires provenance;
-12. **[Rule 9]** use events for cross-actor communication — no direct method calls between actors;
-13. **[Rule 10]** use one real event mechanism per boundary;
-14. **[Rule 11]** allow synchronous calls only to locally owned dependencies;
-15. **[Rule 12]** define failure behavior for event chains;
-16. **[Rule 13]** omit everything that does not carry meaning — do not add parameters, wrappers, interfaces, factories, providers, dependencies, config hops, or files unless they preserve semantics, protect a boundary, prove state, isolate external infrastructure, or reduce total traversal;
+1. **[TIP-002]** preserve semantic types and domain vocabulary;
+2. **[TIP-002]** use semantic types for all domain-significant values instead of raw primitives;
+3. **[Core]** declare or verify the Crystallization Radius budget;
+4. **[Core]** inspect only the files inside the budget unless expansion is justified;
+5. **[Core]** report any required radius expansion explicitly;
+6. **[TIP-004]** avoid pass-through abstractions — each layer must own meaning;
+7. **[TIP-005]** identify the owning Micro Actor before planning changes;
+8. **[TIP-006]** keep business logic declarative and straight-line;
+9. **[TIP-007]** reject loose input at gateways - validate, convert, pass only typed DTOs, and use Auditable DTOs when mutable state requires provenance;
+10. **[TIP-008]** use event-driven integration when event boundaries reduce cross-boundary reasoning;
+11. **[TIP-009 (Draft)]** omit everything that does not carry meaning - do not add parameters, wrappers, interfaces, factories, providers, dependencies, config hops, or files unless they preserve semantics, protect a boundary, prove state, isolate external infrastructure, or reduce total traversal;
 
 The agent MUST NOT claim AIOA conformance from naming alone.
 

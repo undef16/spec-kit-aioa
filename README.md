@@ -3,7 +3,7 @@
 
 
 > **Makes your codebase safe for AI coding assistants.**  
-> Every architectural decision is guided by Technical Implementation Patterns (TIP-002-TIP-008).
+> Every architectural decision is guided by Technical Implementation Patterns (TIP-002-TIP-009).
 
 ---
 
@@ -18,17 +18,18 @@
 | **C1: Minimize Crystallization Radius** | Minimize the context an AI agent must consume before making a safe change |
 | **C2: Preserve Semantic Integrity** | Preserve meaning across all architectural boundaries |
 
-### The 7 Technical Implementation Patterns (TIPs)
+### Technical Implementation Patterns (TIPs)
 
 | TIP | Pattern | Concern |
 |-----|---------|---------|
-| TIP-002 | **Semantic Collision** | Every domain concept has a distinct type — no primitive obsession |
-| TIP-003 | **Repository Search Bottleneck** | No module exceeds 7 files — responsibility is distributed |
-| TIP-004 | **Code Crystallization** | No dead wrapper chains — call directly if no value is added |
-| TIP-005 | **Quantum Spectrum** | Components are named by level: Pico, Nano, Micro — never "Service" |
-| TIP-006 | **Declarative Straight-Line** | Execution mechanics (retry/fallback/timeout) are extracted into named policies |
-| TIP-007 | **Auditable Data Transfer Objects (ADTO)** | All boundary data is typed + provenance-tracked |
-| TIP-008 | **Event-Driven Integration** | All cross-component communication goes through an event bus (even in-memory) |
+| TIP-002 | **Semantic Collision - The Erasure of Domain Boundaries** | Every domain-significant value has a distinct type - no primitive obsession |
+| TIP-003 | **Repository Search Is the Real Bottleneck in AI Coding Agents** | Ordinary changes are discoverable through narrow, explicit structural paths |
+| TIP-004 | **Code Crystallization - Reducing Architectural Indirection** | No dead wrappers, forwarding chains, or pattern-shaped layers without meaning |
+| TIP-005 | **The Quantum Spectrum — Controlling Component Crystallization Radius** | Use Micro, Nano, and Pico actors deliberately as reasoning boundaries |
+| TIP-006 | **Declarative Straight-Line Code - Reducing Control-Flow Crystallization Radius** | Extract retry, timeout, transaction, callback, and concurrency mechanics into named policies or boundaries |
+| TIP-007 | **Strict JSON Gateways and Auditable DTOs - Stop Defensive Programming in Business Logic** | Loose input dies at gateways and enters business logic only as typed DTO/ADTO contracts |
+| TIP-008 | **Event-Driven Integration — Reducing Cross-Boundary Reasoning** | Components communicate through explicit business events to reduce cross-boundary reasoning |
+| TIP-009 (Draft) | **Omission** | Omit parameters, wrappers, providers, config hops, dependencies, and files that do not carry meaning |
 
 ---
 
@@ -77,7 +78,7 @@ The extension adds a mandatory `before_implement` hook that automatically runs A
 What it does:
 - Loads all project artifacts (spec, plan, tasks, constitution)
 - Scans all source code
-- Validates all .md files against TIP-002-TIP-008 with deterministic pass/fail criteria
+- Validates all .md files against TIP-002-TIP-009 with deterministic pass/fail criteria
 - **Blocks implementation** if any TIP fails
 - Generates `aioa-validation-report.md` with full violation details
 
@@ -88,10 +89,10 @@ What it does:
 The AIOA preset overlays architectural guardrails on top of the standard Spec-Driven Development workflow:
 
 ### 1. Specification (`/speckit.specify`)
-AIOA integrates TIP checks directly into the specification process. Each architecture layer is described using applicable TIPs — value objects (TIP-002), context budget (TIP-003), dead wrapper elimination (TIP-004), component naming (TIP-005), execution mechanics (TIP-006), ADTO contracts (TIP-007), and event bus communication (TIP-008). No separate compliance section — TIPs ARE the architecture.
+AIOA integrates TIP checks directly into the specification process. Each architecture layer is described using applicable TIPs — semantic types (TIP-002), context locality (TIP-003), crystallization noise removal (TIP-004), actor granularity (TIP-005), execution mechanics (TIP-006), strict input boundaries and ADTOs (TIP-007), event-driven integration (TIP-008), omission (TIP-009 Draft). No separate compliance section — TIPs ARE the architecture.
 
 ### 2. Planning (`/speckit.plan`)
-Every plan includes **Architecture Decision Records (ADRs)** with AIOA TIPs applied directly to each decision — typed contracts (TIP-007), event-driven integration (TIP-008), Pico/Nano/Micro levels (TIP-005), max 7 files per component (TIP-003), no dead abstraction (TIP-004), extracted mechanics (TIP-006), value objects (TIP-002).
+Every plan includes **Architecture Decision Records (ADRs)** with AIOA TIPs applied directly to each decision — strict input contracts and ADTOs (TIP-007), event-driven integration (TIP-008), Pico/Nano/Micro levels (TIP-005), context locality (TIP-003), no dead abstraction (TIP-004), extracted mechanics (TIP-006), and semantic types (TIP-002).
 
 ### 3. Task Generation (`/speckit.tasks`)
 Each task is annotated with:
@@ -177,7 +178,7 @@ When running `/speckit.constitution`, you **must** mention the TIPs you want in 
 **Correct:**
 ```
 /speckit.constitution
-AIOA project. Follow AIOA Technical Implementation Patterns (TIP-002-TIP-008). Also use OOP, DRY, KISS.
+AIOA project. Follow AIOA Technical Implementation Patterns (TIP-002-TIP-009). Also use OOP, DRY, KISS.
 ```
 
 **Wrong (TIPs will be missing):**
@@ -186,7 +187,7 @@ AIOA project. Follow AIOA Technical Implementation Patterns (TIP-002-TIP-008). A
 My project description here...
 ```
 
-The AIOA preset template hardcodes the 7 AIOA TIPs, but the agent will only fill them in if you explicitly ask. Include any additional principles (OOP, DRY, KISS, SOLID, TDD, etc.) in the same prompt.
+The AIOA preset template references the canonical AIOA TIPs, but the agent will only fill them in if you explicitly ask. Include any additional principles (OOP, DRY, KISS, SOLID, TDD, etc.) in the same prompt.
 
 ### Create a new specification with AIOA compliance
 
@@ -196,13 +197,14 @@ Add user authentication with email+password, JWT tokens, works in monolith and m
 ```
 
 The AIOA preset will guide architecture through TIPs:
-- **TIP-002: Semantic Collision** — distinct Value Objects for Email, PasswordHash, JwtToken
-- **TIP-003: Repository Search Bottleneck** — max 7 files per component, split auth into focused files
-- **TIP-004: Code Crystallization** — no wrapper layers, call auth services directly
-- **TIP-005: Quantum Spectrum** — Pico actors for hashing, Nano actors for session, Micro actors for auth service
-- **TIP-006: Declarative Straight-Line** — extract retry/rate-limit into AuthPolicy
-- **TIP-007: ADTO** — typed schemas for login request/response, provenance for password changes
-- **TIP-008: Event-Driven Integration** — UserLoggedIn event on event bus, even in-process
+- **TIP-002: Semantic Collision - The Erasure of Domain Boundaries** — distinct Value Objects for Email, PasswordHash, JwtToken
+- **TIP-003: Repository Search Is the Real Bottleneck in AI Coding Agents** — keep auth changes discoverable through focused boundary files
+- **TIP-004: Code Crystallization - Reducing Architectural Indirection** — no wrapper layers that only forward auth calls
+- **TIP-005: The Quantum Spectrum — Controlling Component Crystallization Radius** — Pico actors for hashing, Nano actors for session workflows, Micro actors for auth boundary ownership
+- **TIP-006: Declarative Straight-Line Code - Reducing Control-Flow Crystallization Radius** — extract retry/rate-limit into AuthPolicy
+- **TIP-007: Strict JSON Gateways and Auditable DTOs - Stop Defensive Programming in Business Logic** — validate login payloads at gateways, pass typed contracts inward, and preserve provenance for important mutable state
+- **TIP-008: Event-Driven Integration — Reducing Cross-Boundary Reasoning** — UserLoggedIn event for cross-actor communication
+- **TIP-009 (Draft): Omission** — omit speculative providers, factories, wrappers, and config hops
 
 ### Generate a plan with architecture decisions
 
@@ -222,13 +224,14 @@ Each plan step includes:
 ```
 
 Validates against all AIOA TIPs:
-- TIP-002: Semantic Collision — distinct types, no primitive obsession
-- TIP-003: Repository Search Bottleneck — max 7 files, distributed responsibility
-- TIP-004: Code Crystallization — no dead wrapper chains
-- TIP-005: Quantum Spectrum — Pico/Nano/Micro level naming
-- TIP-006: Declarative Straight-Line — extracted execution mechanics
-- TIP-007: ADTO — typed + auditable boundary data
-- TIP-008: Event-Driven Integration — event bus for cross-component communication
+- TIP-002: Semantic Collision - The Erasure of Domain Boundaries — distinct types, no primitive obsession
+- TIP-003: Repository Search Is the Real Bottleneck in AI Coding Agents — narrow, explicit structural paths
+- TIP-004: Code Crystallization - Reducing Architectural Indirection — no dead wrapper chains
+- TIP-005: The Quantum Spectrum — Controlling Component Crystallization Radius — deliberate Micro/Nano/Pico boundaries
+- TIP-006: Declarative Straight-Line Code - Reducing Control-Flow Crystallization Radius — extracted execution mechanics
+- TIP-007: Strict JSON Gateways and Auditable DTOs - Stop Defensive Programming in Business Logic — loose input dies at gateways and important mutable state is explainable through ADTOs
+- TIP-008: Event-Driven Integration — Reducing Cross-Boundary Reasoning — event-driven integration across boundaries
+- TIP-009 (Draft): Omission — omit what does not carry meaning
 
 ---
 
@@ -241,7 +244,7 @@ spec-kit-aioa-preset/
 ├── LICENSE                             # MIT License
 ├── CHANGELOG.md                        # Version history
 ├── templates/                          # AIOA additions (appended to core templates)
-│   ├── constitution-template-aioa.md   # AIOA TIP wrap (TIP-002-TIP-008)
+│   ├── constitution-template-aioa.md   # AIOA TIP wrap (TIP-002-TIP-009)
 │   ├── spec-template-aioa.md           # AIOA TIP wrap for specification
 │   ├── plan-template-aioa.md           # AIOA TIP wrap for planning ADRs
 │   └── tasks-template-aioa.md          # AIOA TIP wrap for task decomposition
@@ -250,7 +253,7 @@ spec-kit-aioa-preset/
 │   ├── speckit.plan.md                 # Plan command with AIOA TIP guidance
 │   └── speckit.tasks.md                # Tasks command with AIOA TIP guidance
 └── docs/                               # AIOA reference documentation
-    └── AIOA.md                         # Technical Implementation Patterns — single source of truth for TIP-002-TIP-008
+    └── AIOA.md                         # Technical Implementation Patterns — single source of truth for TIP-002-TIP-009
 ```
 
 
@@ -262,7 +265,7 @@ The AIOA Enforcement Extension adds:
 aioa-enforcement/
 ├── extension.yml                       # Extension manifest with mandatory before_implement hook
 └── commands/
-    ├── speckit.aioa-enforcement.validate.md        # AIOA TIP validation command (TIP-002-TIP-008)
+    ├── speckit.aioa-enforcement.validate.md        # AIOA TIP validation command (TIP-002-TIP-009)
 
 ```
 
