@@ -170,6 +170,7 @@ These commands are typed inside an AI coding assistant (GitHub Copilot, Claude C
 | `/speckit.checklist` | Generate quality checklists |
 | `/speckit.taskstoissues` | Convert tasks to GitHub issues |
 | `/speckit.aioa-enforcement.validate` | Pre-implementation AIOA compliance validation (mandatory hook, requires extension) |
+| `/speckit.aioa-enforcement.code-review` | Post-implementation AIOA code review on generated source files (auto-fired by `after_implement_code_review` hook, requires extension) |
 
 ### ⚠️ Important: Mentioning TIPs in `/speckit.constitution`
 
@@ -263,9 +264,10 @@ The AIOA Enforcement Extension adds:
 
 ```
 aioa-enforcement/
-├── extension.yml                       # Extension manifest with mandatory before_implement hook
+├── extension.yml                       # Extension manifest with mandatory hooks
 └── commands/
     ├── speckit.aioa-enforcement.validate.md        # AIOA TIP validation command (TIP-002-TIP-009)
+    └── speckit.aioa-enforcement.code-review.md     # AIOA post-implementation code review (source files)
 
 ```
 

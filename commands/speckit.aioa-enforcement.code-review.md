@@ -1,10 +1,10 @@
 ---
-description: "Post-implementation code review - scans generated source files against AIOA TIPs"
+description: "AIOA post-implementation code review - scans generated source files against AIOA TIPs"
 ---
 
-# speckit.code-review - AIOA Code Review
+# speckit.aioa-enforcement.code-review - AIOA Code Review
 
-> **Post-implementation check.** Called automatically by `after_implement` hook with `optional: false`. Validates generated source code, not just markdown specs.
+> **Post-implementation check.** Called automatically by `after_implement_code_review` hook with `optional: false`. Validates generated source code, not just markdown specs.
 
 **Purpose:** Scan generated source files against AIOA TIPs after implementation. This catches violations that markdown-only validation cannot detect.
 
@@ -18,7 +18,7 @@ Scan the project directory recursively for source files. Use the project's confi
 
 1. Read `docs/AIOA.md` and dynamically extract TIPs by parsing the pattern `### TIP-{N}: {TIP Name}`, `### TIP-{N} - {TIP Name}`, or `### TIP-{N} — {TIP Name}` from section 4+.
 2. Also include the **ADTO Continuity Requirement** as a sub-check under TIP-007. It is documented in AIOA.md as `#### ADTO Continuity Requirement` under the TIP-007 section.
-3. For each extracted TIP, check source code against its detection categories using AST/pattern analysis.
+3. For each extracted TIP, read its `#### Code Detection (language-agnostic)` table if present. Apply every rule in that table (O-1, O-2, P-1, G-1, etc.) against the source code. The patterns in the table are language-agnostic — match by structure, not syntax.
 4. Report violations with file:line references.
 
 ### Step 3: Generate Code Review Report

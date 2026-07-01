@@ -137,7 +137,11 @@ AIOA evaluates how software is understood and safely modified, not where it is d
 
 ## 4. Technical Implementation Patterns
 
-### TIP-002: Semantic Collision - The Erasure of Domain Boundaries
+### TIP-002: Semantic Collision and Domain Name Consistency
+
+TIP-002 has two parts: (A) traditional semantic types against primitive obsession, and (B) domain name consistency — ensuring every domain concept uses exactly one canonical name throughout the system.
+
+#### Part A: Semantic Types — The Erasure of Domain Boundaries
 
 Any domain-significant value MUST use a semantic type instead of a raw primitive.
 
@@ -157,7 +161,8 @@ A semantic type MUST:
 
 1. be distinct from its underlying primitive;
 2. encode the business meaning in its type name;
-3. validate construction when invalid values are possible.
+3. validate construction when invalid values are possible;
+4. validate only at the boundary that first accepts the loose value. Do not duplicate validation in downstream types that consume the validated value.
 
 Example:
 
@@ -179,6 +184,29 @@ getUser(paymentId)
 ```
 
 Syntactic correctness does not protect semantic correctness.
+
+#### Part B: Domain Name Consistency
+
+A domain concept MUST have one canonical name used across the entire system. Any artifact — type, method, variable, query, file, parameter — that refers to that concept MUST use its canonical name. Synonyms, operation-based aliases, and contextual renaming are Semantic Integrity violations: they force an AI agent to waste context verifying that two names refer to the same thing.
+
+**Rules:**
+
+1. Method/function operating on domain X is named after X, not after the operation (`getUsers()` not `fetchProfiles()`).
+2. Variable holding domain X is named after X (`users` not `records` or `profiles`).
+3. Query/resource on domain X is named after X (`selectUsers` not `selectProfiles`).
+4. File/module named after domain X contains only types from domain X.
+
+**Code Detection (language-agnostic):**
+
+| Rule | Pattern | Violation |
+|------|---------|-----------|
+| D-1 | Method on type X uses domain Y (`UserRepository.fetchAccounts()`) | Method domain ≠ owning type domain |
+| D-2 | Variable named differently than its declared type (`profiles: list[User]`) | Variable aliases the domain |
+| D-3 | Query/resource named after domain Y but operates on domain X table | Query domain ≠ table domain |
+| D-4 | Type/class/module in file named after domain X belongs to domain Y | File hosts a foreign domain |
+| D-5 | Parameter named differently than its type annotation | Parameter aliases the domain |
+
+Exceptions: universal operations (`getBy*`, `count*`, `find*`) and infrastructure (`serialize`, `validate`) do not introduce new domains. Compound names OK when needed for disambiguation: canonical domain first (`UserAccount`, `OrderPayment`).
 
 ### TIP-003: Repository Search Is the Real Bottleneck in AI Coding Agents
 
@@ -373,6 +401,19 @@ Violation:
 function process(data: dict): Result
 ```
 
+#### Code Detection (language-agnostic)
+
+Apply these structural checks to source code for TIP-007:
+
+| Rule | Pattern | Violation |
+|------|---------|-----------|
+| G-1 | Raw dict/json/map passes between internal methods/functions past the gateway | Missing typed DTO contract — or existing DTO/ADTO not reused when one already covers the contract |
+| G-2 | Attribute access with runtime null-check (`getattr`, `?.`, null-coalescing) repeated >2× in same method on same object | Object entered business logic without gateway |
+| G-3 | Object fields unpacked to primitives and passed down a call chain (`obj.f1`, `obj.f2` as separate args) | ADTO/DTO broken — pass the object |
+| G-4 | ADTO received but destructured to primitives before reaching the next consumer | ADTO chain broken. See ADTO Continuity Requirement below. |
+
+**Reuse-first rule for typed contracts:** Before creating a new DTO, check whether an existing typed contract in the owning actor's budget already covers the required fields. If an existing DTO or ADTO subsumes the needed fields (all required fields present, ≥50% overlap, or the new type is a strict subset), reuse it. Only create a new DTO when no existing type covers the contract.
+
 DTOs are deterministic boundary contracts. When runtime state provenance matters, a DTO MUST be extended into an Auditable DTO.
 
 An ADTO MUST provide:
@@ -405,11 +446,11 @@ If the consumer needs additional context, that context MUST be added at a bounda
 
 Do not unpack an ADTO into primitive parameter chains.
 
-Do not convert an ADTO into loose dictionaries, raw JSON, generic maps, or unrelated DTOs mid-chain.
+Do not convert an ADTO into loose dictionaries, raw JSON, generic maps, or **unrelated** DTOs mid-chain. An ADTO may be reused as the input contract of a downstream consumer within the same process — that is continuity, not duplication. The forbidden case is creating a parallel DTO whose fields are a subset or copy of an ADTO that is already in scope.
 
 Do not load configuration, runtime context, or external state mid-chain to compensate for missing ADTO context.
 
-The ADTO is the execution context. Preserve it until the workflow reaches a real boundary, terminal state, or event emission.
+The ADTO is the execution context. Preserve it until the workflow reaches a real boundary (network, file, foreign service), terminal state, or event emission.
 
 Use plain DTOs instead of ADTOs only when thousands of instances are created and audit tracking creates a proven performance cost. In all other cases, important mutable runtime state MUST use ADTO.
 
@@ -555,6 +596,25 @@ A wrapper MUST NOT be introduced when it only forwards.
 
 A parameter MUST NOT exist only for speculative reuse, testing convenience, pattern conformity, or future flexibility.
 
+#### Code Detection (language-agnostic)
+
+Apply these structural checks to source code for TIP-009:
+
+| Rule | Pattern | Violation |
+|------|---------|-----------|
+| O-1 | Function/method body is a single delegation call forwarding same parameters | Private wrapper — omit, inline the call |
+| O-2 | Optional parameter with unconditional fallback inside (`if x is None: x = Default()`) | Dead parameter — don't pass it |
+| O-3 | Import/require/include statement inside function body instead of module/file level | Fragmented — move to top or omit |
+| O-4 | New type duplicates an existing type with ≥50% field overlap (or full overlap, including strict subsets) | Merge into the existing type or extend it via inheritance/composition; do not create a parallel type |
+| P-1 | Object AND its individual fields passed together to same call (`f(obj, obj.a, obj.b)`) | Redundant — pass only object |
+| P-2 | Function/method signature with >5 parameters | Too many — unify into struct/DTO, or extend an existing DTO/ADTO that already covers ≥50% of fields |
+| P-3 | Parameter always called with same literal value at every call site | Inline the value, drop the param |
+| P-4 | Object field assigned to local variable and used unchanged ≥2× | Redundant alias — use `obj.field` directly |
+| W-1 | Same attribute/member access pattern repeated >3× in one method (`x.a ?? fallback`, `getattr(x, 'a')`) | Defensive spray — fix contract on entry |
+| W-2 | Name contains typo, placeholder (`TODO`, `FIXME`), or meaningless fragment (`temp`, `data`, `stuff`) | Doesn't carry domain meaning — rename or omit |
+| W-3 | Comment explains WHAT the code does (not WHY) | Omit comment, make code self-documenting |
+| J-1 | ("Justification") "Existing code does the same thing" used as sole justification for a structural violation | Invalid. A violation does not become acceptable by repetition. Each instance independently expands the crystallization radius. New code must conform regardless of legacy precedent. |
+
 The only valid reasons to add structure are:
 
 1. preserve domain meaning;
@@ -577,6 +637,7 @@ Every AIOA-aligned spec, plan, task, review, or implementation MUST provide the 
 | --- | --- |
 | [TIP-002] Contracts | DTOs, events, schemas, gateways, and versions when needed. |
 | [TIP-002] Semantic types | Domain-significant identifiers and values are not raw primitives. |
+| [TIP-002] Domain names | Every domain concept uses exactly one canonical name across types, methods, variables, queries, files, parameters, and comments. No synonyms, aliases, or operation-based renaming. |
 | [Core] Radius budget | Files, modules, boundaries, dependencies, exclusions. |
 | [TIP-004] Abstraction justification | Each layer, class, or function owns meaning — no pass-through wrappers. |
 | [TIP-005] Boundary ownership | Which Micro Actor owns the behavior. |
@@ -594,6 +655,7 @@ Without these artifacts, the work is AIOA-inspired at most. It is not AIOA-confo
 | [Core] Core | Is Crystallization Radius minimized without losing domain meaning? | Small code change requires broad repository traversal. |
 | [Core] Budget | Is the radius budget explicit and respected? | Implementation reads outside the budget without explanation. |
 | [TIP-002] Semantics | Are domain concepts represented by semantic types? | IDs, names, timestamps, symbols, or workflow keys passed as raw strings. |
+| [TIP-002] Domain names | Does every domain concept use one canonical name across the entire system? | Method/function/variable/query named after an operation or synonym instead of the domain type. DTO or type named after a different domain than its owning context. |
 | [TIP-003] Locality | Can relevant behavior be found through the owning boundary? | Global `utils`, mixed `services`, shared helper dumping grounds. |
 | [TIP-004] Abstraction | Does each abstraction own meaning? | Pass-through wrappers, forwarding chains, pattern-shaped files. |
 | [TIP-005] Actors | Are Micro, Nano, and Pico responsibilities distinguishable? | Everything named `Service`, `Manager`, or `Helper`. |
@@ -611,15 +673,16 @@ When acting as an AI coding agent under AIOA, the agent MUST:
 
 1. **[TIP-002]** preserve semantic types and domain vocabulary;
 2. **[TIP-002]** use semantic types for all domain-significant values instead of raw primitives;
-3. **[Core]** declare or verify the Crystallization Radius budget;
-4. **[Core]** inspect only the files inside the budget unless expansion is justified;
-5. **[Core]** report any required radius expansion explicitly;
-6. **[TIP-004]** avoid pass-through abstractions — each layer must own meaning;
-7. **[TIP-005]** identify the owning Micro Actor before planning changes;
-8. **[TIP-006]** keep business logic declarative and straight-line;
-9. **[TIP-007]** reject loose input at gateways - validate, convert, pass only typed DTOs, and use Auditable DTOs when mutable state requires provenance;
-10. **[TIP-008]** use event-driven integration when event boundaries reduce cross-boundary reasoning;
-11. **[TIP-009 (Draft)]** omit everything that does not carry meaning - do not add parameters, wrappers, interfaces, factories, providers, dependencies, config hops, or files unless they preserve semantics, protect a boundary, prove state, isolate external infrastructure, or reduce total traversal;
+3. **[TIP-002]** use the canonical domain name for every code artifact — never rename, alias, or synonymize a domain concept in methods, variables, queries, files, or types;
+4. **[Core]** declare or verify the Crystallization Radius budget;
+5. **[Core]** inspect only the files inside the budget unless expansion is justified;
+6. **[Core]** report any required radius expansion explicitly;
+7. **[TIP-004]** avoid pass-through abstractions — each layer must own meaning;
+8. **[TIP-005]** identify the owning Micro Actor before planning changes;
+9. **[TIP-006]** keep business logic declarative and straight-line;
+10. **[TIP-007]** reject loose input at gateways - validate, convert, pass only typed DTOs, and use Auditable DTOs when mutable state requires provenance;
+11. **[TIP-008]** use event-driven integration when event boundaries reduce cross-boundary reasoning;
+12. **[TIP-009 (Draft)]** omit everything that does not carry meaning - do not add parameters, wrappers, interfaces, factories, providers, dependencies, config hops, or files unless they preserve semantics, protect a boundary, prove state, isolate external infrastructure, or reduce total traversal;
 
 The agent MUST NOT claim AIOA conformance from naming alone.
 

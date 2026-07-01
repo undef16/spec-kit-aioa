@@ -74,7 +74,7 @@ Tasks within same component should be sequential to minimize context reloading.
 
 ### Rule 6: Every Task Declares Signatures
 
-Every task MUST include `.signatures:` listing ALL classes, methods (with parameters), types, and functions it introduces. This creates a contract between task definition and implementation. Code review (`speckit.code-review`) verifies and syncs these signatures with actual code.
+Every task MUST include `.signatures:` listing ALL classes, methods (with parameters), types, and functions it introduces. This creates a contract between task definition and implementation. Code review (`speckit.aioa-enforcement.code-review`) verifies and syncs these signatures with actual code.
 
 Format: `.signatures: ClassName, ClassName.method(param: Type): Return, DataType, FunctionName(param: Type): Return`
 

@@ -1,3 +1,7 @@
+# SHARED METADATA: Values below are shared between preset.yml and extension.yml.
+# Keep these fields in sync: schema_version, version, author, repository, license, requires.speckit_version.
+# No automated dedup is performed; manual sync is required.
+
 schema_version: "1.0"
 
 extension:
@@ -21,7 +25,7 @@ provides:
     - name: "speckit.aioa-enforcement.code-review"
       file: "commands/speckit.aioa-enforcement.code-review.md"
       description: "Perform AIOA code review on generated source files"
-      aliases: ["speckit.aioa-enforcement.code-review.check"]
+      aliases: ["speckit.aioa-enforcement.code-review.check", "speckit.code-review"]
 
 hooks:
   after_constitution:
